@@ -1,0 +1,93 @@
+Arguments: 
+  /usr/local/bin/node /usr/local/Cellar/yarn/1.22.17_2/libexec/bin/yarn.js global bin
+
+PATH: 
+  /Users/gozala/Projects/clojurescript/bin:/Users/gozala/.mozbuild/git-cinnabar:/Users/gozala/Projects/maptrie/node_modules/.bin:/Users/gozala/.lein/bin:/Users/gozala/.local/bin:/usr/local/bin:/usr/local/sbin:/Users/gozala/Projects/moz-git-tools:/Users/gozala/Projects/maptrie/node_modules/.bin:/Users/gozala/.lein/bin:/Users/gozala/.local/bin:/usr/local/bin:/usr/local/sbin:/Users/gozala/.nvm/versions/node/v16.17.1/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/MacGPG2/bin:/opt/X11/bin:/Library/Apple/usr/bin:/Users/gozala/Library/pnpm:/Users/gozala/.local/bin:/Users/gozala/.mozbuild/arcanist/bin:/Users/gozala/.mozbuild/moz-phab:/Users/gozala/.deno/bin:/Users/gozala/.cargo/bin:/Users/gozala/Projects/clojurescript/bin:/Users/gozala/.mozbuild/git-cinnabar://node_modules/.bin:/Users/gozala/.lein/bin:/usr/local/sbin:/Users/gozala/Projects/moz-git-tools:/Users/gozala/.nvm/versions/node/v16.17.1/bin:/Users/gozala/.go/bin:/usr/local/bin/bin:/Users/gozala/.go/bin
+
+Yarn version: 
+  1.22.17
+
+Node version: 
+  16.15.1
+
+Platform: 
+  darwin arm64
+
+Trace: 
+  SyntaxError: /Users/gozala/Projects/maptrie/package.json: Unexpected token } in JSON at position 1231
+      at JSON.parse (<anonymous>)
+      at /usr/local/Cellar/yarn/1.22.17_2/libexec/lib/cli.js:1625:59
+      at Generator.next (<anonymous>)
+      at step (/usr/local/Cellar/yarn/1.22.17_2/libexec/lib/cli.js:310:30)
+      at /usr/local/Cellar/yarn/1.22.17_2/libexec/lib/cli.js:321:13
+
+npm manifest: 
+  {
+    "name": "hashtrie",
+    "description": "Immutable hash maps implemented as hash array papped tries",
+    "version": "0.0.0",
+    "keywords": [
+      "HAMT",
+      "CHAMP",
+      "immutable",
+      "hashmap",
+      "map"
+    ],
+    "files": [
+      "src",
+      "dist/src"
+    ],
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/gozala/hashtrie.git"
+    },
+    "homepage": "https://github.com/gozala/hashtrie.git",
+    "scripts": {
+      "build": "tsc --build",
+      "prepare": "tsc --build",
+      "test:web": "playwright-test test/**/*.spec.js --cov && nyc report",
+      "test:node": "c8 --check-coverage --branches 100 --functions 100 --lines 100 mocha test/**/*.spec.js",
+      "test": "mocha test/**/*.spec.js",
+      "coverage": "c8 --reporter=html mocha test/**/*.spec.js && npm_config_yes=true npx st -d coverage -p 8080",
+      "check": "tsc --build"
+    },
+    "dependencies": {},
+    "devDependencies": {
+      "c8": "^7.11.0",
+      "chai": "^4.3.6",
+      "mocha": "^10.0.0",
+      "nyc": "^15.1.0",
+      "playwright-test": "^8.1.1",
+      "typescript": "4.8.3"
+    },
+    "type": "module",
+    "main": "src/lib.js",
+    "module": "src/lib.js",
+    "types": "./dist/src/lib.d.ts",
+    "typesVersions": {
+      "*": {
+        ".": [
+          "dist/src/lib.d.ts"
+        ],
+      }
+    },
+    "exports": {
+      ".": {
+        "types": "./dist/src/lib.d.ts",
+        "import": "./src/lib.js"
+      }
+    },
+    "c8": {
+      "exclude": [
+        "test/**",
+        "dist/**"
+      ]
+    },
+    "license": "(Apache-2.0 AND MIT)"
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
