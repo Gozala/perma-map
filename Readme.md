@@ -17,6 +17,14 @@ In order to support [IPFS UnixFS][] implementation (which uses `256` factor by d
 
 It is also worth noting that even with branching factor of `32` it can store large amount of entries in a relatively shallow tree e.g. tree 6 levels deep could store around `33,554,432` entries.
 
+## Credits
+
+- [Leveling up Clojure’s Hash Maps](https://bendyworks.com/blog/leveling-clojures-hash-maps)
+- [Hash Array Mapped Tries](https://worace.works/2016/05/24/hash-array-mapped-tries/)
+- [Optimizing Hash-Array Mapped Tries for Fast and Lean Immutable JVM Collections](https://michael.steindorfer.name/publications/oopsla15.pdf)
+- [Lean Hash Array Mapped Trie (Lean Map)](https://github.com/bendyworks/lean-map)
+- [Ideal hash trees](http://lampwww.epfl.ch/papers/idealhashtrees.pdf)
+
 [ipfs unixfs]: https://github.com/ipfs/specs/blob/main/UNIXFS.md
 [champ]: https://michael.steindorfer.name/publications/oopsla15.pdf
 [ipld hamt]: https://ipld.io/specs/advanced-data-layouts/hamt/spec/
