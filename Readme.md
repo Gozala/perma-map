@@ -1,6 +1,10 @@
-# maptire
+# alucha
 
 Hash Array Map Trie (HAMT) implementation based on [CHAMP][] paper and inspired by [Clojure][]. Library provides a builder API inspired by clojure [transient][]s that can be utilized for bulk updates.
+
+## Name
+
+I wanted to call this library maple, but that name seems to be taken so I chose to call it [Alucha](https://en.wikipedia.org/wiki/Prunus_vachuschtii) instead, which is a type of (most delicious) plum tree.
 
 ## Status
 

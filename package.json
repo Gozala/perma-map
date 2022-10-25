@@ -1,5 +1,5 @@
 {
-  "name": "hashtrie",
+  "name": "alucha",
   "description": "Immutable hash maps implemented as hash array papped tries",
   "version": "0.0.1",
   "keywords": [
