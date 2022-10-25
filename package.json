@@ -1,7 +1,7 @@
 {
   "name": "hashtrie",
   "description": "Immutable hash maps implemented as hash array papped tries",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "keywords": [
     "HAMT",
     "CHAMP",
