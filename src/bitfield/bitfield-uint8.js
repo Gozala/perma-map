@@ -20,6 +20,7 @@ export const configure = size => {
     popcount,
     and,
     or,
+    count,
   }
 }
 
@@ -35,6 +36,42 @@ export const create = size => {
 }
 
 /**
+ * @param {Uint8Array} bitfield
+ */
+export const count = bitfield => bitfield.byteLength * 8
+
+/**
+ * Compute offset for the given index
+ *
+ * @param {Uint8Array} bitfield
+ * @param {number} index
+ */
+const at = (bitfield, index) => {
+  const byteOffset = bitfield.byteLength - 1 - ((index / 8) | 0)
+  const bitOffset = index % 8
+  const byte = bitfield[byteOffset]
+
+  return { byte, byteOffset, bitOffset }
+}
+
+/**
+ * Set a particular bit.
+ *
+ * @param {Uint8Array} bytes
+ * @param {number} index
+ * @param {number} byte
+ * @returns {Uint8Array}
+ */
+const setByte = (bytes, index, byte) => {
+  if (bytes[index] !== byte) {
+    const result = bytes.slice(0)
+    result[index] = byte
+    return result
+  }
+  return bytes
+}
+
+/**
  * Set a particular bit.
  *
  * @param {Uint8Array} bitfield
@@ -42,15 +79,8 @@ export const create = size => {
  * @returns {Uint8Array}
  */
 export const set = (bitfield, index) => {
-  const byteOffset = (index / 8) | 0
-  const bitOffset = index % 8
-  if ((bitfield[byteOffset] & (1 << bitOffset)) === 0) {
-    const result = bitfield.slice()
-    result[byteOffset] |= 1 << bitOffset
-    return result
-  } else {
-    return bitfield
-  }
+  const { byte, byteOffset, bitOffset } = at(bitfield, index)
+  return setByte(bitfield, byteOffset, byte | (1 << bitOffset))
 }
 
 /**
@@ -61,15 +91,8 @@ export const set = (bitfield, index) => {
  * @returns {Uint8Array}
  */
 export const unset = (bitfield, index) => {
-  const byteOffset = (index / 8) | 0
-  const bitOffset = index % 8
-  if ((bitfield[byteOffset] & (1 << bitOffset)) !== 0) {
-    const result = bitfield.slice()
-    result[byteOffset] |= ~(1 << bitOffset)
-    return result
-  } else {
-    return bitfield
-  }
+  const { byte, byteOffset, bitOffset } = at(bitfield, index)
+  return setByte(bitfield, byteOffset, byte & (0xff ^ (1 << bitOffset)))
 }
 
 /**
@@ -79,9 +102,8 @@ export const unset = (bitfield, index) => {
  * @param {number} index
  */
 export const get = (bitfield, index) => {
-  var byteOffset = (index / 8) | 0
-  var bitOffset = index % 8
-  return (bitfield[byteOffset] & (1 << bitOffset)) !== 0
+  var { byte, bitOffset } = at(bitfield, index)
+  return ((byte >> bitOffset) & 0x1) !== 0
 }
 
 /**
@@ -99,15 +121,14 @@ export const fromBytes = bytes => bytes
  * @param {number} index
  */
 export const popcount = (bitfield, index = bitfield.byteLength * 8) => {
-  const byteOffset = (index / 8) | 0
-  const bitOffset = index % 8
+  const { byteOffset, bitOffset, byte } = at(bitfield, index)
 
-  let count = popcount32(bitfield[byteOffset], bitOffset)
-  let offset = 0
-  while (offset < byteOffset) {
+  let count = popcount32(byte, bitOffset)
+  let offset = bitfield.byteLength - 1
+  while (offset > byteOffset) {
     const byte = bitfield[offset]
     count += bitCount(byte)
-    offset++
+    offset--
   }
 
   return count

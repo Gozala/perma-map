@@ -84,16 +84,22 @@ export const or = (left, right) => left | right
  * @returns {Uint8Array}
  */
 export const toBytes = bitField =>
-  new Uint8Array(new Uint32Array([bitField]).buffer)
+  Uint8Array.of(
+    (bitField >> 24) & 0b1111_1111,
+    (bitField >> 16) & 0b1111_1111,
+    (bitField >> 8) & 0b1111_1111,
+    bitField & 0b1111_1111
+  )
+// new Uint8Array(new Uint32Array([bitField]).buffer)
 
 /**
  *
  * @param {Uint8Array} bytes
  * @returns {API.Uint32}
  */
-export const fromBytes = bytes =>
-  new Uint32Array(
-    bytes.buffer,
-    bytes.byteOffset,
-    bytes.byteLength / Uint32Array.BYTES_PER_ELEMENT
-  )[0]
+export const fromBytes = bytes => {
+  if (bytes.length !== 4) {
+    throw new Error(`Expected 4 bytes instead got ${bytes.length}`)
+  }
+  return (bytes[0] << 24) + (bytes[1] << 16) + (bytes[2] << 8) + bytes[3]
+}
