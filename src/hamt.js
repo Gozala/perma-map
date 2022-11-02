@@ -2,6 +2,8 @@ import * as API from "./hamt/api.js"
 import * as Hash from "./hash.js"
 import * as BitField from "./hamt/bitfield.js"
 
+export * from "./hamt/api.js"
+
 export { API }
 
 const utf8 = new TextEncoder()
@@ -30,7 +32,7 @@ class BitmapIndexedNode {
    * @param {API.Edit|null} edit
    * @param {Uint8Array} datamap
    * @param {Uint8Array} nodemap
-   * @param {Array<API.Node<T, K>|K|T>} children
+   * @param {Array<API.BitmapIndexedNode<T, K>|K|T>} children
    * @param {API.Config} config
    */
   constructor(edit, datamap, nodemap, children, config) {
@@ -184,7 +186,7 @@ class BitmapIndexedNode {
    * @param {Uint8Array} key
    * @param {K} name
    * @param {{value:boolean}} removedLeaf
-   * @returns {API.Node<T, K>}
+   * @returns {API.BitmapIndexedNode<T, K>}
    */
   dissociate(edit, shift, key, name, removedLeaf) {
     const { datamap, nodemap, children, config } = this
@@ -355,7 +357,7 @@ class BitmapIndexedNode {
    * @param {BitmapIndexedNode<T, K>} node
    * @param {API.Edit|null} edit
    * @param {number} offset
-   * @param {API.Node<T, K>} child
+   * @param {API.BitmapIndexedNode<T, K>} child
    */
   static copyAndSetChild(node, edit, offset, child) {
     const fork = node.fork(edit)
@@ -489,7 +491,7 @@ class BitmapIndexedNode {
     }
 
     while (offset < count) {
-      const node = /** @type {API.Node<T, K>} */ (children[offset])
+      const node = /** @type {API.BitmapIndexedNode<T, K>} */ (children[offset])
       yield* node.entries()
       offset += 1
     }
@@ -510,7 +512,7 @@ class BitmapIndexedNode {
     }
 
     while (offset < count) {
-      const node = /** @type {API.Node<T, K>} */ (children[offset])
+      const node = /** @type {API.BitmapIndexedNode<T, K>} */ (children[offset])
       yield* node.keys()
       offset += 1
     }
@@ -532,7 +534,7 @@ class BitmapIndexedNode {
     }
 
     while (offset < count) {
-      const node = /** @type {API.Node<T, K>} */ (children[offset])
+      const node = /** @type {API.BitmapIndexedNode<T, K>} */ (children[offset])
       yield* node.values()
       offset += 1
     }
@@ -540,7 +542,7 @@ class BitmapIndexedNode {
 }
 
 /**
- * @param {API.Node} node
+ * @param {API.BitmapIndexedNode} node
  */
 const hasSingleEntry = node => node.nodeArity === 0 && node.dataArity === 1
 
@@ -552,42 +554,44 @@ const createBitField = config => BitField.create(Math.pow(2, config.bitWidth))
 /**
  * @template T
  * @template {string} K
- * @param {API.Node<T, K>} node
+ * @param {API.BitmapIndexedNode<T, K>} node
  * @param {number} index
  */
-const keyAt = ({ children }, index) =>
+export const keyAt = ({ children }, index) =>
   /** @type {K} */ (children[keyPosition(index)])
 
 /**
  * @param {number} index
  */
-const keyPosition = index => index * 2
+export const keyPosition = index => index * 2
 
 /**
  * @template T
  * @template {string} K
- * @param {API.Node<T, K>} node
+ * @param {API.BitmapIndexedNode<T, K>} node
  * @param {number} index
  */
-const valueAt = ({ children }, index) =>
+export const valueAt = ({ children }, index) =>
   /** @type {T} */ (children[valuePosition(index)])
 
 /**
  * @param {number} index
  */
-const valuePosition = index => index * 2 + 1
+export const valuePosition = index => index * 2 + 1
 
 /**
  * @template T
  * @template {string} K
- * @param {API.Node<T, K> & { nodemap: Uint8Array }} node
+ * @param {API.BitmapIndexedNode<T, K>} node
  * @param {number} offset
  */
-const resolveNode = (node, offset) =>
-  /** @type {API.Node<T, K>} */ (node.children[nodePosition(node, offset)])
+export const resolveNode = (node, offset) =>
+  /** @type {API.BitmapIndexedNode<T, K>} */ (
+    node.children[nodePosition(node, offset)]
+  )
 
 /**
- * @param {API.Node & { nodemap: Uint8Array }} node
+ * @param {API.BitmapIndexedNode} node
  * @param {number} offset
  */
 const nodePosition = ({ children, nodemap }, offset) =>
@@ -608,7 +612,7 @@ class PersistentHashMap {
   /**
    *
    * @param {number} count
-   * @param {API.Node<T, K>} root
+   * @param {API.BitmapIndexedNode<T, K>} root
    * @param {Hash.Config} config
    */
   constructor(count = 0, root, config) {
@@ -715,7 +719,7 @@ class HashMapBuilder {
   /**
    * @param {API.Edit} edit
    * @param {number} count
-   * @param {API.Node<T, K>} root
+   * @param {API.BitmapIndexedNode<T, K>} root
    * @param {Hash.Config} config
    */
 
@@ -758,7 +762,7 @@ class HashMapBuilder {
       )
 
       if (this.root !== root) {
-        this.root = /** @type {API.Node<T, K>} */ (root)
+        this.root = /** @type {API.BitmapIndexedNode<T, K>} */ (root)
       }
 
       if (addedLeaf.value) {
@@ -840,41 +844,3 @@ export const createBuilder = config => {
  * @param {API.Edit|null} editor
  */
 const canEdit = (owner, editor) => owner != null && owner === editor
-
-/**
- * Interpolates IPFS HAMT children order dropping CHAMP optimizations.
- *
- * @template {string} K
- * @template T
- * @param {BitmapIndexedNode<T, K>} root
- */
-export const interpolate = function* (root) {
-  const index = BitField.or(root.datamap, root.nodemap)
-  const size = index.byteLength * 8
-  let bitOffset = 0
-  let dataCount = 0
-  let nodeCount = 0
-  while (bitOffset < size) {
-    const label = bitOffset.toString(16).toUpperCase().padStart(2, "0")
-    if (BitField.get(root.datamap, bitOffset)) {
-      const key = keyAt(root, dataCount)
-      yield {
-        label: `${label}${key}`,
-        bitOffset,
-        index: dataCount,
-        key,
-        value: valueAt(root, dataCount),
-      }
-      dataCount++
-    } else if (BitField.get(root.nodemap, bitOffset)) {
-      yield {
-        label,
-        bitOffset,
-        index: nodeCount,
-        node: resolveNode(root, nodeCount),
-      }
-      nodeCount += 1
-    }
-    bitOffset++
-  }
-}
