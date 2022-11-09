@@ -1,6 +1,4 @@
 import * as API from "./hamt/api.js"
-import * as Hash from "./hash.js"
-import * as BitField from "./hamt/bitfield.js"
 
 export * from "./hamt/api.js"
 
@@ -11,29 +9,34 @@ const utf8 = new TextEncoder()
 /**
  * @template T
  * @template {string} K
- * @implements {API.Node<T, K>}
+ * @template {API.Config} C
+ * @implements {API.BitmapIndexedNode<T, K, C>}
  */
 class BitmapIndexedNode {
   /**
-   * @param {API.Config} config
+   * @template T
+   * @template {string} K
+   * @template {API.Config} C
+   * @param {C} config
    * @param {API.Edit|null} edit
+   * @returns {API.BitmapIndexedNode<T, K, C>}
    */
   static withConfig(config, edit = null) {
     return new this(
       edit,
-      createBitField(config),
-      createBitField(config),
-      [],
+      config.BitField.empty(),
+      config.BitField.empty(),
+      /** @type {API.Children<T, K, C>} */ ([]),
       config
     )
   }
 
   /**
    * @param {API.Edit|null} edit
-   * @param {Uint8Array} datamap
-   * @param {Uint8Array} nodemap
-   * @param {Array<API.BitmapIndexedNode<T, K>|K|T>} children
-   * @param {API.Config} config
+   * @param {ReturnType<C['BitField']['empty']>} datamap
+   * @param {ReturnType<C['BitField']['empty']>} nodemap
+   * @param {API.Children<T, K, C>} children
+   * @param {C} config
    */
   constructor(edit, datamap, nodemap, children, config) {
     this.edit = edit
@@ -44,35 +47,39 @@ class BitmapIndexedNode {
   }
 
   get nodeArity() {
-    return BitField.popcount(this.nodemap)
+    return this.config.BitField.popcount(this.nodemap)
   }
   get dataArity() {
-    return BitField.popcount(this.datamap)
+    return this.config.BitField.popcount(this.datamap)
   }
 
+  /**
+   * @returns {API.BitmapIndexedNode<T, K, C>}
+   */
   empty() {
     return BitmapIndexedNode.withConfig(this.config)
   }
 
   /**
    * @template X
-   * @param {API.Uint32} shift
-   * @param {Uint8Array} key
-   * @param {K} name
+   * @param {API.Uint32} depth
+   * @param {ReturnType<C["Path"]["from"]>} path
+   * @param {K} key
    * @param {X} notFound
    * @returns {T|X}
    */
 
-  lookup(shift, key, name, notFound) {
+  lookup(depth, path, key, notFound) {
     const { datamap, nodemap, config } = this
-    const offset = Hash.read(key, shift / config.bitWidth, config)
+    const offset = config.Path.at(path, depth)
+
     // If bit is set in the data bitmap we have some key, value under the
     // matching hash segment.
-    if (BitField.get(datamap, offset)) {
-      const index = BitField.popcount(datamap, 0, offset)
+    if (config.BitField.get(datamap, offset)) {
+      const index = config.BitField.popcount(datamap, offset)
       // If key matches actual key in the map we found the the value
       // otherwise we did not.
-      if (keyAt(this, index) === name) {
+      if (keyAt(this, index) === key) {
         return valueAt(this, index)
       } else {
         return notFound
@@ -80,14 +87,9 @@ class BitmapIndexedNode {
     }
     // If bit is set in the node bitmapt we have a node under the
     // matching hash segment.
-    else if (BitField.get(nodemap, offset)) {
-      // Resolve node and continue lookip within it.
-      return resolveNode(this, offset).lookup(
-        incShift(config, shift),
-        key,
-        name,
-        notFound
-      )
+    else if (config.BitField.get(nodemap, offset)) {
+      // Resolve node and continue lookup within it.
+      return resolveNode(this, offset).lookup(depth + 1, path, key, notFound)
     }
     // If we have neither node nor key-pair for this hash segment
     // we return notFound.
@@ -99,22 +101,22 @@ class BitmapIndexedNode {
   /**
    * @template {string} R
    * @param {API.Edit|null} edit
-   * @param {API.Uint32} shift
-   * @param {Uint8Array} key
-   * @param {K|R} name
+   * @param {API.Uint32} depth
+   * @param {ReturnType<C["Path"]["from"]>} path
+   * @param {K|R} key
    * @param {T} value
    * @param {{value:boolean}} addedLeaf
-   * @returns {BitmapIndexedNode<T, K | R>}
+   * @returns {API.BitmapIndexedNode<T, K | R, C>}
    */
-  associate(edit, shift, key, name, value, addedLeaf) {
+  associate(edit, depth, path, key, value, addedLeaf) {
     const { datamap, nodemap, children, config } = this
-    const offset = Hash.read(key, shift / config.bitWidth, config)
+    const offset = config.Path.at(path, depth)
     // If bit is set in the data bitmap we have some key, value under the
     // matching hash segment.
-    if (BitField.get(datamap, offset)) {
-      const index = BitField.popcount(datamap, 0, offset)
+    if (config.BitField.get(datamap, offset)) {
+      const index = config.BitField.popcount(datamap, offset)
       const found = keyAt(this, index)
-      if (name === found) {
+      if (key === found) {
         if (valueAt(this, index) === value) {
           return this
         } else {
@@ -124,12 +126,12 @@ class BitmapIndexedNode {
         const node = BitmapIndexedNode.mergeTwoPairs(
           config,
           edit,
-          incShift(config, shift),
-          utf8.encode(found),
+          depth + 1,
+          config.Path.from(found),
           found,
           valueAt(this, index),
+          path,
           key,
-          name,
           value
         )
         addedLeaf.value = true
@@ -139,13 +141,13 @@ class BitmapIndexedNode {
     }
     // If bit is set in the node bitmapt we have a node under the
     // matching hash segment.
-    else if (BitField.get(nodemap, offset)) {
+    else if (config.BitField.get(nodemap, offset)) {
       const child = resolveNode(this, offset)
       const newChild = child.associate(
         edit,
-        incShift(config, shift),
+        depth + 1,
+        path,
         key,
-        name,
         value,
         addedLeaf
       )
@@ -158,20 +160,20 @@ class BitmapIndexedNode {
     // If we have neither node nor a key-value for this hash segment. We copy
     // current children and add new key-value pair
     else {
-      const index = BitField.popcount(datamap, 0, offset)
+      const index = config.BitField.popcount(datamap, offset)
       const position = keyPosition(index)
       addedLeaf.value = true
 
       return new BitmapIndexedNode(
         edit,
         // Capture new entry in the data bitmap
-        BitField.set(datamap.slice(), offset),
-        nodemap.slice(),
+        config.BitField.set(datamap, offset),
+        nodemap,
         // Splice new entry into a location corresponding to the hash.
-        /** @type {API.Children<T, K|R>} */
+        /** @type {API.Children<T, K|R, C>} */
         ([
           ...children.slice(0, position),
-          name,
+          key,
           value,
           ...children.slice(position),
         ]),
@@ -182,32 +184,31 @@ class BitmapIndexedNode {
 
   /**
    * @param {API.Edit|null} edit
-   * @param {API.Uint32} shift
-   * @param {Uint8Array} key
-   * @param {K} name
+   * @param {API.Uint32} depth
+   * @param {ReturnType<C["Path"]["from"]>} path
+   * @param {K} key
    * @param {{value:boolean}} removedLeaf
-   * @returns {API.BitmapIndexedNode<T, K>}
+   * @returns {API.BitmapIndexedNode<T, K, C>}
    */
-  dissociate(edit, shift, key, name, removedLeaf) {
+  dissociate(edit, depth, path, key, removedLeaf) {
     const { datamap, nodemap, children, config } = this
-    const offset = Hash.read(key, shift / config.bitWidth, config)
+    const offset = config.Path.at(path, depth)
     // If bit is set in the data bitmap we have some key, value under the
     // matching hash segment.
-    if (BitField.get(datamap, offset)) {
-      const index = BitField.popcount(datamap, 0, offset)
+    if (config.BitField.get(datamap, offset)) {
+      const index = config.BitField.popcount(datamap, offset)
       const found = keyAt(this, index)
-      if (name === found) {
+      if (key === found) {
         removedLeaf.value = true
 
         if (
-          BitField.popcount(datamap) === 2 &&
-          BitField.popcount(nodemap) === 0
+          config.BitField.popcount(datamap) === 2 &&
+          config.BitField.popcount(nodemap) === 0
         ) {
-          const newDatamap = BitField.unset(datamap.slice(), offset)
           return new BitmapIndexedNode(
             edit,
-            newDatamap,
-            createBitField(config),
+            config.BitField.unset(datamap, offset),
+            config.BitField.empty(),
             index === 0
               ? [children[2], children[3]]
               : [children[0], children[1]],
@@ -225,22 +226,16 @@ class BitmapIndexedNode {
     }
     // If bit is set in the node bitmapt we have a node under the
     // matching hash segment.
-    else if (BitField.get(nodemap, offset)) {
+    else if (config.BitField.get(nodemap, offset)) {
       const child = resolveNode(this, offset)
-      const newChild = child.dissociate(
-        edit,
-        incShift(config, shift),
-        key,
-        name,
-        removedLeaf
-      )
+      const newChild = child.dissociate(edit, depth + 1, path, key, removedLeaf)
       if (child === newChild) {
         return this
       } else {
         if (hasSingleEntry(newChild)) {
           if (
-            BitField.popcount(datamap) === 0 &&
-            BitField.popcount(nodemap) === 1
+            config.BitField.popcount(datamap) === 0 &&
+            config.BitField.popcount(nodemap) === 1
           ) {
             return newChild
           } else {
@@ -248,7 +243,6 @@ class BitmapIndexedNode {
               this,
               edit,
               offset,
-              // @ts-expect-error - It is actually BitmapIndexedNode
               newChild
             )
           }
@@ -267,23 +261,23 @@ class BitmapIndexedNode {
   /**
    * @template T
    * @template {string} K
-   * @param {BitmapIndexedNode<T, K>} node
+   * @template {API.Config} C
+   * @param {BitmapIndexedNode<T, K, C>} node
    * @param {API.Edit|null} edit
    * @param {number} offset
-   * @returns {BitmapIndexedNode<T, K>}
+   * @returns {BitmapIndexedNode<T, K, C>}
    */
   static copyAndRemoveValue(
     { datamap, nodemap, children, config },
     edit,
     offset
   ) {
-    const index = keyPosition(BitField.popcount(datamap, 0, offset))
+    const index = keyPosition(config.BitField.popcount(datamap, offset))
 
     return new BitmapIndexedNode(
       edit,
-      BitField.unset(datamap.slice(), offset),
-      nodemap.slice(),
-
+      config.BitField.unset(datamap, offset),
+      nodemap,
       [...children.slice(0, index), ...children.slice(index + 2)],
       config
     )
@@ -292,17 +286,18 @@ class BitmapIndexedNode {
   /**
    * @template T
    * @template {string} K
-   * @param {BitmapIndexedNode<T, K>} node
+   * @template {API.Config} C
+   * @param {API.BitmapIndexedNode<T, K, C>} node
    * @param {API.Edit|null} edit
    * @param {number} offset
-   * @param {BitmapIndexedNode<T, K>} child
-   * @returns {BitmapIndexedNode<T, K>}
+   * @param {API.Node<T, K, C>} child
+   * @returns {API.BitmapIndexedNode<T, K, C>}
    */
 
   static copyAndMigrateToInline(node, edit, offset, child) {
-    const { datamap, nodemap } = node
+    const { datamap, nodemap, config } = node
     const oldIndex = nodePosition(node, offset)
-    const newIndex = keyPosition(BitField.popcount(datamap, 0, offset))
+    const newIndex = keyPosition(config.BitField.popcount(datamap, offset))
     const children = node.children.slice()
 
     // remove the node that we are inlining
@@ -312,8 +307,8 @@ class BitmapIndexedNode {
 
     return new BitmapIndexedNode(
       edit,
-      BitField.set(datamap.slice(), offset),
-      BitField.unset(nodemap.slice(), offset),
+      config.BitField.set(datamap, offset),
+      config.BitField.unset(nodemap, offset),
       children,
       node.config
     )
@@ -321,7 +316,7 @@ class BitmapIndexedNode {
 
   /**
    * @param {API.Edit|null} edit
-   * @return {BitmapIndexedNode<T, K>}
+   * @return {API.BitmapIndexedNode<T, K, C>}
    */
   fork(edit = null) {
     if (canEdit(this.edit, edit)) {
@@ -340,7 +335,8 @@ class BitmapIndexedNode {
   /**
    * @template T
    * @template {string} K
-   * @param {BitmapIndexedNode<T, K>} node
+   * @template {API.Config} C
+   * @param {API.BitmapIndexedNode<T, K, C>} node
    * @param {API.Edit|null} edit
    * @param {number} offset
    * @param {T} value
@@ -354,10 +350,11 @@ class BitmapIndexedNode {
   /**
    * @template T
    * @template {string} K
-   * @param {BitmapIndexedNode<T, K>} node
+   * @template {API.Config} C
+   * @param {API.BitmapIndexedNode<T, K, C>} node
    * @param {API.Edit|null} edit
    * @param {number} offset
-   * @param {API.BitmapIndexedNode<T, K>} child
+   * @param {API.Node<T, K, C>} child
    */
   static copyAndSetChild(node, edit, offset, child) {
     const fork = node.fork(edit)
@@ -368,14 +365,16 @@ class BitmapIndexedNode {
   /**
    * @template T
    * @template {string} K
-   * @param {BitmapIndexedNode<T, K>} node
+   * @template {API.Config} C
+   * @param {API.BitmapIndexedNode<T, K, C>} node
    * @param {API.Edit|null} edit
    * @param {number} offset
-   * @param {BitmapIndexedNode<T, K>} child
+   * @param {API.Node<T, K, C>} child
+   * @returns {API.BitmapIndexedNode<T, K, C>}
    */
   static copyAndMigrateToNode(node, edit, offset, child) {
     const { nodemap, datamap, config, children } = node
-    const index = BitField.popcount(datamap, 0, offset)
+    const index = config.BitField.popcount(datamap, offset)
     // Previous id corresponds to the key position
     const oldId = keyPosition(index)
     const newId = nodePosition(node, offset)
@@ -383,10 +382,10 @@ class BitmapIndexedNode {
     return new BitmapIndexedNode(
       edit,
       // datamap without old child offset off
-      BitField.unset(datamap.slice(), offset),
+      config.BitField.unset(datamap, offset),
       // nodemap with new nodes bit set
-      BitField.set(nodemap.slice(), offset),
-      /** @type {API.Children<T, K>} */
+      config.BitField.set(nodemap, offset),
+      /** @type {API.Children<T, K, C>} */
       ([
         // children up to the one we encountered conflict at
         ...children.slice(0, oldId),
@@ -404,48 +403,48 @@ class BitmapIndexedNode {
   /**
    * @template T
    * @template {string} K
-   * @param {API.Config} config
+   * @template {API.Config} C
+   * @param {C} config
    * @param {API.Edit|null} edit
-   * @param {number} shift
-   * @param {Uint8Array} oldHash
+   * @param {number} depth
+   * @param {ReturnType<C["Path"]["from"]>} oldPath
    * @param {K} oldKey
    * @param {T} oldValue
-   * @param {Uint8Array} newHash
+   * @param {ReturnType<C["Path"]["from"]>} newPath
    * @param {K} newKey
    * @param {T} newValue
-   * @returns {BitmapIndexedNode<T, K>}
+   * @returns {API.BitmapIndexedNode<T, K, C>}
    */
   static mergeTwoPairs(
     config,
     edit,
-    shift,
-    oldHash,
+    depth,
+    oldPath,
     oldKey,
     oldValue,
-    newHash,
+    newPath,
     newKey,
     newValue
   ) {
-    const depth = shift / config.bitWidth
-    const oldId = Hash.read(oldHash, depth, config)
-    const newId = Hash.read(newHash, depth, config)
+    const oldId = config.Path.at(oldPath, depth)
+    const newId = config.Path.at(newPath, depth)
 
     // If hashes still match create another intermediery node and merge these
     // two nodes at next depth level.
     if (oldId === newId) {
       return new BitmapIndexedNode(
         edit,
-        createBitField(config),
-        BitField.set(createBitField(config), oldId),
+        config.BitField.empty(),
+        config.BitField.of(oldId),
         [
           BitmapIndexedNode.mergeTwoPairs(
             config,
             edit,
-            incShift(config, shift),
-            oldHash,
+            depth + 1,
+            oldPath,
             oldKey,
             oldValue,
-            newHash,
+            newPath,
             newKey,
             newValue
           ),
@@ -455,19 +454,21 @@ class BitmapIndexedNode {
     }
     // otherwise create new node with both key-value pairs as it's children
     else {
-      const nodemap = createBitField(config)
-      const datamap = createBitField(config)
-      BitField.set(datamap, oldId)
-      BitField.set(datamap, newId)
       // We insert child with a lower index first so that we can derive it's
       // index on access via popcount
-      /** @type {API.Children<T, K>} */
+      /** @type {API.Children<T, K, C>} */
       const children =
         oldId < newId
           ? [oldKey, oldValue, newKey, newKey]
           : [newKey, newKey, oldKey, oldValue]
 
-      return new BitmapIndexedNode(edit, datamap, nodemap, children, config)
+      return new BitmapIndexedNode(
+        edit,
+        config.BitField.of(oldId, newId),
+        config.BitField.empty(),
+        children,
+        config
+      )
     }
   }
 
@@ -491,7 +492,7 @@ class BitmapIndexedNode {
     }
 
     while (offset < count) {
-      const node = /** @type {API.BitmapIndexedNode<T, K>} */ (children[offset])
+      const node = /** @type {API.Node<T, K>} */ (children[offset])
       yield* node.entries()
       offset += 1
     }
@@ -512,7 +513,7 @@ class BitmapIndexedNode {
     }
 
     while (offset < count) {
-      const node = /** @type {API.BitmapIndexedNode<T, K>} */ (children[offset])
+      const node = /** @type {API.Node<T, K>} */ (children[offset])
       yield* node.keys()
       offset += 1
     }
@@ -534,7 +535,7 @@ class BitmapIndexedNode {
     }
 
     while (offset < count) {
-      const node = /** @type {API.BitmapIndexedNode<T, K>} */ (children[offset])
+      const node = /** @type {API.Node<T, K>} */ (children[offset])
       yield* node.values()
       offset += 1
     }
@@ -542,19 +543,18 @@ class BitmapIndexedNode {
 }
 
 /**
- * @param {API.BitmapIndexedNode} node
+ * @template T
+ * @template {string} K
+ * @template {API.Config} C
+ * @param {API.Node<T, K, C>} node
+ * @returns {node is API.BitmapIndexedNode<T, K, C>}
  */
 const hasSingleEntry = node => node.nodeArity === 0 && node.dataArity === 1
 
 /**
- * @param {API.Config} config
- */
-const createBitField = config => BitField.create(Math.pow(2, config.bitWidth))
-
-/**
  * @template T
  * @template {string} K
- * @param {API.BitmapIndexedNode<T, K>} node
+ * @param {API.Node<T, K>} node
  * @param {number} index
  */
 export const keyAt = ({ children }, index) =>
@@ -568,7 +568,7 @@ export const keyPosition = index => index * 2
 /**
  * @template T
  * @template {string} K
- * @param {API.BitmapIndexedNode<T, K>} node
+ * @param {API.Node<T, K>} node
  * @param {number} index
  */
 export const valueAt = ({ children }, index) =>
@@ -582,38 +582,34 @@ export const valuePosition = index => index * 2 + 1
 /**
  * @template T
  * @template {string} K
- * @param {API.BitmapIndexedNode<T, K>} node
+ * @template {API.Config} C
+ * @param {API.BitmapIndexedNode<T, K, C>} node
  * @param {number} offset
  */
 export const resolveNode = (node, offset) =>
-  /** @type {API.BitmapIndexedNode<T, K>} */ (
-    node.children[nodePosition(node, offset)]
-  )
-
-/**
- * @param {API.BitmapIndexedNode} node
- * @param {number} offset
- */
-const nodePosition = ({ children, nodemap }, offset) =>
-  children.length - 1 - BitField.popcount(nodemap, 0, offset)
-
-/**
- *
- * @param {API.Config} config
- * @param {API.Uint32} shift
- */
-const incShift = (config, shift) => shift + config.bitWidth
+  /** @type {API.Node<T, K, C>} */ (node.children[nodePosition(node, offset)])
 
 /**
  * @template T
  * @template {string} K
+ * @param {API.BitmapIndexedNode<T, K>} node
+ * @param {number} offset
+ */
+const nodePosition = ({ children, nodemap, config }, offset) =>
+  children.length - 1 - config.BitField.popcount(nodemap, offset)
+
+/**
+ * @template T
+ * @template {string} K
+ * @template {API.Config} C
+ * @implements {API.PersistentHashMap<T, K, C>}
  */
 class PersistentHashMap {
   /**
    *
    * @param {number} count
-   * @param {API.BitmapIndexedNode<T, K>} root
-   * @param {Hash.Config} config
+   * @param {API.BitmapIndexedNode<T, K, C>} root
+   * @param {C} config
    */
   constructor(count = 0, root, config) {
     this.count = count
@@ -627,38 +623,51 @@ class PersistentHashMap {
   get size() {
     return this.count
   }
+
+  /**
+   * @returns {API.PersistentHashMap<T, K, C>}
+   */
   clone() {
     return new PersistentHashMap(this.count, this.root, this.config)
   }
+
+  /**
+   * @returns {API.PersistentHashMap<T, K, C>}
+   */
   empty() {
-    return new PersistentHashMap(0, this.root.empty(), this.config)
+    return new PersistentHashMap(
+      0,
+      BitmapIndexedNode.withConfig(this.config, null),
+      this.config
+    )
   }
   /**
    * @param {K} key
    * @returns {boolean}
    */
   has(key) {
-    return this.root.lookup(0, utf8.encode(key), key, notFound) !== notFound
+    const value = this.root.lookup(0, this.config.Path.from(key), key, notFound)
+    return value !== notFound
   }
   /**
    * @param {K} key
    * @returns {T|undefined}
    */
   get(key) {
-    return this.root.lookup(0, utf8.encode(key), key, undefined)
+    return this.root.lookup(0, this.config.Path.from(key), key, undefined)
   }
   /**
    * @template {string} R
    * @param {R} key
    * @param {T} value
-   * @returns {PersistentHashMap<T, K|R>}
+   * @returns {API.PersistentHashMap<T, K|R, C>}
    */
   set(key, value) {
     const addedLeaf = { value: false }
     const root = this.root.associate(
       null,
       0,
-      utf8.encode(key),
+      this.config.Path.from(key),
       key,
       value,
       addedLeaf
@@ -675,11 +684,18 @@ class PersistentHashMap {
   }
   /**
    * @param {K} key
+   * @returns {API.PersistentHashMap<T, K, C>}
    */
   delete(key) {
-    const root = this.root.dissociate(null, 0, utf8.encode(key), key, {
-      value: false,
-    })
+    const root = this.root.dissociate(
+      null,
+      0,
+      this.config.Path.from(key),
+      key,
+      {
+        value: false,
+      }
+    )
     if (root === this.root) {
       return this
     } else {
@@ -688,8 +704,7 @@ class PersistentHashMap {
   }
 
   get bitField() {
-    // @ts-ignore
-    return BitField.or(this.root.datamap, this.root.nodemap)
+    return this.config.BitField.or(this.root.datamap, this.root.nodemap)
   }
 
   [Symbol.iterator]() {
@@ -706,6 +721,9 @@ class PersistentHashMap {
     return this.root.values()
   }
 
+  /**
+   * @returns {API.HashMapBuilder<T, K, C>}
+   */
   createBuilder() {
     return new HashMapBuilder({}, this.count, this.root, this.config)
   }
@@ -714,13 +732,15 @@ class PersistentHashMap {
 /**
  * @template T
  * @template {string} K
+ * @template {API.Config} C
+ * @implements {API.HashMapBuilder<T, K, C>}
  */
 class HashMapBuilder {
   /**
    * @param {API.Edit} edit
    * @param {number} count
-   * @param {API.BitmapIndexedNode<T, K>} root
-   * @param {Hash.Config} config
+   * @param {API.BitmapIndexedNode<T, K, C>} root
+   * @param {C} config
    */
 
   constructor(edit, count, root, config) {
@@ -736,6 +756,10 @@ class HashMapBuilder {
     this.root = root
     this.config = config
   }
+
+  get tableSize() {
+    return Math.pow(2, this.config.bitWidth)
+  }
   get size() {
     if (this.edit) {
       return this.count
@@ -747,7 +771,7 @@ class HashMapBuilder {
    * @template {string} R
    * @param {R} key
    * @param {T} value
-   * @returns {HashMapBuilder<T, K|R>}
+   * @returns {API.HashMapBuilder<T, K|R, C>}
    */
   set(key, value) {
     if (this.edit) {
@@ -755,14 +779,14 @@ class HashMapBuilder {
       const root = this.root.associate(
         this.edit,
         0,
-        utf8.encode(key),
+        this.config.Path.from(key),
         key,
         value,
         addedLeaf
       )
 
       if (this.root !== root) {
-        this.root = /** @type {API.BitmapIndexedNode<T, K>} */ (root)
+        this.root = /** @type {API.BitmapIndexedNode<T, K, C>} */ (root)
       }
 
       if (addedLeaf.value) {
@@ -776,6 +800,7 @@ class HashMapBuilder {
   }
   /**
    * @param {K} key
+   * @returns {API.HashMapBuilder<T, K, C>}
    */
   delete(key) {
     if (this.edit) {
@@ -786,7 +811,7 @@ class HashMapBuilder {
       const root = this.root.dissociate(
         this.edit,
         0,
-        utf8.encode(key),
+        this.config.Path.from(key),
         key,
         removedLeaf
       )
@@ -802,6 +827,10 @@ class HashMapBuilder {
     }
   }
 
+  /**
+   *
+   * @returns {API.PersistentHashMap<T, K, C>}
+   */
   build() {
     if (this.edit) {
       this.edit = null
@@ -817,19 +846,21 @@ const notFound = new String("not found")
 /**
  * @template {string} K
  * @template T
- * @param {API.Config} config
- * @returns {PersistentHashMap<T, K>}
+ * @template {API.Config} C
+ * @param {C} config
+ * @returns {API.PersistentHashMap<T, K, C>}
  */
-export const create = config =>
+export const empty = config =>
   new PersistentHashMap(0, BitmapIndexedNode.withConfig(config, null), config)
 
 /**
  * @template {string} K
  * @template T
- * @param {API.Config} config
- * @returns {HashMapBuilder<T, K>}
+ * @template {API.Config} C
+ * @param {C} config
+ * @returns {API.HashMapBuilder<T, K, C>}
  */
-export const createBuilder = config => {
+export const builder = config => {
   const edit = {}
   return new HashMapBuilder(
     edit,
