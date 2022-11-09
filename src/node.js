@@ -1,9 +1,8 @@
 import * as API from "./hamt/api.js"
 export * from "./hamt/api.js"
-
+import * as BitField from "./bitfield/Uint32.js"
+import * as Path from "./path/Uint32.js"
 export { API }
-
-const utf8 = new TextEncoder()
 
 /**
  * @template T
@@ -14,8 +13,8 @@ const utf8 = new TextEncoder()
 class BitmapIndexedNode {
   /**
    * @param {API.Edit|null} edit
-   * @param {ReturnType<C['bitfield']['create']>} datamap
-   * @param {ReturnType<C['bitfield']['create']>} nodemap
+   * @param {ReturnType<C['BitField']['empty']>} datamap
+   * @param {ReturnType<C['BitField']['empty']>} nodemap
    * @param {API.Children<T, K, C>} children
    * @param {C} config
    */
@@ -28,10 +27,10 @@ class BitmapIndexedNode {
   }
 
   get nodeArity() {
-    return this.config.bitfield.popcount(this.nodemap)
+    return this.config.BitField.popcount(this.nodemap)
   }
   get dataArity() {
-    return this.config.bitfield.popcount(this.datamap)
+    return this.config.BitField.popcount(this.datamap)
   }
 
   /**
@@ -43,49 +42,49 @@ class BitmapIndexedNode {
 
   /**
    * @template X
-   * @param {API.Uint32} shift
-   * @param {ReturnType<C['hash']['create']>} key
-   * @param {K} name
+   * @param {API.Uint32} depth
+   * @param {ReturnType<C['Path']['from']>} path
+   * @param {K} key
    * @param {X} notFound
    * @returns {T|X}
    */
 
-  lookup(shift, key, name, notFound) {
-    return lookup(this, shift, key, name, notFound)
+  lookup(depth, path, key, notFound) {
+    return lookup(this, depth, path, key, notFound)
   }
 
   /**
    * @template {string} R
    * @param {API.Edit|null} edit
-   * @param {API.Uint32} shift
-   * @param {ReturnType<C['hash']['create']>} key
-   * @param {K|R} name
+   * @param {API.Uint32} depth
+   * @param {ReturnType<C['Path']['from']>} path
+   * @param {K|R} key
    * @param {T} value
    * @param {{value:boolean}} addedLeaf
-   * @returns {API.BitmapIndexedNode<T, K | R>}
+   * @returns {API.BitmapIndexedNode<T, K | R, C>}
    */
-  associate(edit, shift, key, name, value, addedLeaf) {
-    return associate(this, edit, shift, key, name, value, addedLeaf)
+  associate(edit, depth, path, key, value, addedLeaf) {
+    return associate(this, edit, depth, path, key, value, addedLeaf)
   }
 
   /**
    * @param {API.Edit|null} edit
-   * @param {API.Uint32} shift
-   * @param {ReturnType<C['hash']['create']>} key
-   * @param {K} name
+   * @param {API.Uint32} depth
+   * @param {ReturnType<C['Path']['from']>} path
+   * @param {K} key
    * @param {{value:boolean}} removedLeaf
-   * @returns {API.Node<T, K, C>}
+   * @returns {API.BitmapIndexedNode<T, K, C>}
    */
-  dissociate(edit, shift, key, name, removedLeaf) {
-    return dissociate(this, edit, shift, key, name, removedLeaf)
+  dissociate(edit, depth, path, key, removedLeaf) {
+    return dissociate(this, edit, depth, path, key, removedLeaf)
   }
 
   /**
    * @param {API.Edit|null} edit
-   * @returns {this}
+   * @returns {API.BitmapIndexedNode<T, K, C>}
    */
   fork(edit = null) {
-    return /** @type {this} */ (fork(this, edit))
+    return fork(this, edit)
   }
 
   /**
@@ -139,39 +138,39 @@ class HashCollisionNode {
   /**
    * @template X
    * @param {API.Uint32} _shift
-   * @param {unknown} _key
-   * @param {K} name
+   * @param {unknown} _path
+   * @param {K} key
    * @param {X} notFound
    * @returns {T|X}
    */
-  lookup(_shift, _key, name, notFound) {
-    return lookupCollision(this, name, notFound)
+  lookup(_shift, _path, key, notFound) {
+    return lookupCollision(this, key, notFound)
   }
 
   /**
    * @template {string} R
    * @param {API.Edit|null} edit
    * @param {API.Uint32} _shift
-   * @param {ReturnType<C['hash']['create']>} key
-   * @param {K|R} name
+   * @param {ReturnType<C['Path']['from']>} path
+   * @param {K|R} key
    * @param {T} value
    * @param {{value:boolean}} addedLeaf
    * @returns {API.HashCollisionNode<T, K | R, C>}
    */
-  associate(edit, _shift, key, name, value, addedLeaf) {
-    return associateCollision(this, edit, key, name, value, addedLeaf)
+  associate(edit, _shift, path, key, value, addedLeaf) {
+    return associateCollision(this, edit, path, key, value, addedLeaf)
   }
 
   /**
    * @param {API.Edit|null} edit
    * @param {API.Uint32} _shift
-   * @param {ReturnType<C['hash']['create']>} hash
-   * @param {K} name
+   * @param {ReturnType<C['Path']['from']>} path
+   * @param {K} key
    * @param {{value:boolean}} removedLeaf
    * @returns {API.Node<T, K, C>}
    */
-  dissociate(edit, _shift, hash, name, removedLeaf) {
-    return dissociateollision(this, edit, hash, name, removedLeaf)
+  dissociate(edit, _shift, path, key, removedLeaf) {
+    return dissociateCollision(this, edit, path, key, removedLeaf)
   }
 
   /**
@@ -230,7 +229,7 @@ export const lookupCollision = (node, name, notFound) => {
  * @template {string} R
  * @param {API.HashCollisionNode<T, K, C>} node
  * @param {API.Edit|null} edit
- * @param {ReturnType<C['hash']['create']>} key
+ * @param {ReturnType<C['Path']['from']>} key
  * @param {K|R} name
  * @param {T} value
  * @param {{value:boolean}} addedLeaf
@@ -269,12 +268,12 @@ export const associateCollision = (node, edit, key, name, value, addedLeaf) => {
  * @template {API.Config} C
  * @param {API.HashCollisionNode<T, K, C>} node
  * @param {API.Edit|null} edit
- * @param {ReturnType<C['hash']['create']>} hash
+ * @param {ReturnType<C['Path']['from']>} hash
  * @param {K} name
  * @param {{value:boolean}} removedLeaf
  * @returns {API.Node<T, K, C>}
  */
-export const dissociateollision = (node, edit, hash, name, removedLeaf) => {
+export const dissociateCollision = (node, edit, hash, name, removedLeaf) => {
   const { children: entries, count, config } = node
   const index = findHashCollisionNodeIndex(entries, count, name)
   // If there is no entry with a the given name this is noop so we just
@@ -290,7 +289,7 @@ export const dissociateollision = (node, edit, hash, name, removedLeaf) => {
       const offset = index === 0 ? 2 : 0
       return /** @type {API.BitmapIndexedNode<T, K, C>} */ (
         associate(
-          create(config, edit),
+          create(config),
           edit,
           0,
           hash,
@@ -354,19 +353,20 @@ const findHashCollisionNodeIndex = (entries, count, key) => {
   return index
 }
 
+const defaultConfig = { bitWidth: 32, BitField, Path }
 /**
  * @template T
  * @template {string} K
  * @template {API.Config} C
+ * @param {API.Edit|null} [edit]
  * @param {C} config
- * @param {API.Edit|null} edit
  * @returns {API.BitmapIndexedNode<T, K, C>}
  */
 export const create = (config, edit = null) =>
   new BitmapIndexedNode(
     edit,
-    config.bitfield.create(),
-    config.bitfield.create(),
+    config.BitField.empty(),
+    config.BitField.empty(),
     /** @type {API.Children<T, K, C>} */ ([]),
     config
   )
@@ -374,26 +374,36 @@ export const create = (config, edit = null) =>
 /**
  * @template T, U
  * @template {string} K
+ * @param {API.BitmapIndexedNode<T, K>} node
+ * @param {K} key
+ * @param {U} notFound
+ */
+export const get = (node, key, notFound) =>
+  lookup(node, 0, node.config.Path.from(key), key, notFound)
+
+/**
+ * @template T, U
+ * @template {string} K
  * @template Bits, BitMap
  * @param {API.BitmapIndexedNode<T, K, API.Config<Bits, BitMap>>} node
- * @param {API.Uint32} shift
- * @param {Bits} key
- * @param {K} name
+ * @param {API.Uint32} depth
+ * @param {Bits} path
+ * @param {K} key
  * @param {U} notFound
  * @returns {T|U}
  */
-export const lookup = (node, shift, key, name, notFound) => {
+export const lookup = (node, depth, path, key, notFound) => {
   const { datamap, nodemap, config } = node
-  const { bitWidth, hash, bitfield } = config
-  const offset = hash.slice(key, shift, shift + bitWidth)
+  const { Path, BitField } = config
+  const offset = Path.at(path, depth)
 
   // If bit is set in the data bitmap we have some key, value under the
   // matching hash segment.
-  if (bitfield.get(datamap, offset)) {
-    const index = bitfield.popcount(datamap, offset)
+  if (BitField.get(datamap, offset)) {
+    const index = BitField.popcount(datamap, offset)
     // If key matches actual key in the map we found the the value
     // otherwise we did not.
-    if (keyAt(node, index) === name) {
+    if (keyAt(node, index) === key) {
       return valueAt(node, index)
     } else {
       return notFound
@@ -401,10 +411,10 @@ export const lookup = (node, shift, key, name, notFound) => {
   }
   // If bit is set in the node bitmapt we have a node under the
   // matching hash segment.
-  else if (bitfield.get(nodemap, offset)) {
+  else if (BitField.get(nodemap, offset)) {
     // Resolve node and continue lookup within it.
     const child = resolveNode(node, offset)
-    return child.lookup(incShift(config, shift), key, name, notFound)
+    return child.lookup(depth + 1, path, key, notFound)
   }
   // If we have neither node nor key-pair for this hash segment
   // we return notFound.
@@ -414,31 +424,46 @@ export const lookup = (node, shift, key, name, notFound) => {
 }
 
 /**
+ * @template T, U
+ * @template {string} K
+ * @template {string} R
+ * @template {API.Config} C
+ * @param {API.BitmapIndexedNode<T, K, C>} node
+ * @param {API.Edit|null} edit
+ * @param {R} key
+ * @param {T} value
+ * @param {{ value: boolean }} addedLeaf
+ * @returns {API.BitmapIndexedNode<T, K|R, C>}
+ */
+export const set = (node, edit, key, value, addedLeaf) =>
+  associate(node, edit, 0, node.config.Path.from(key), key, value, addedLeaf)
+
+/**
  * @template T
  * @template {string} K
  * @template {string} R
- * @template Bits, BitMap
- * @param {API.BitmapIndexedNode<T, K, API.Config<Bits, BitMap>>} node
+ * @template {API.Config} C
+ * @param {API.BitmapIndexedNode<T, K, C>} node
  * @param {API.Edit|null} edit
- * @param {API.Uint32} shift
- * @param {Bits} key
- * @param {K|R} name
+ * @param {API.Uint32} depth
+ * @param {ReturnType<C['Path']['from']>} path
+ * @param {K|R} key
  * @param {T} value
  * @param {{value:boolean}} addedLeaf
- * @returns {API.BitmapIndexedNode<T, K | R, API.Config<Bits, BitMap>>}
+ * @returns {API.BitmapIndexedNode<T, K | R, C>}
  */
-export const associate = (node, edit, shift, key, name, value, addedLeaf) => {
-  const { datamap, nodemap, children, config } = node
-  const { hash, bitfield } = config
-  const offset = hash.slice(key, shift, incShift(config, shift))
+export const associate = (node, edit, depth, path, key, value, addedLeaf) => {
+  const { datamap, nodemap, config } = node
+  const { Path, BitField } = config
+  const offset = Path.at(path, depth)
   // If bit is set in the data bitmap we have some key, value under the
   // matching hash segment.
-  if (bitfield.get(datamap, offset)) {
-    const index = bitfield.popcount(datamap, offset)
+  if (BitField.get(datamap, offset)) {
+    const index = BitField.popcount(datamap, offset)
     const found = keyAt(node, index)
     // If we have entry with given name and value is the same return node
     // as is, otherwise fork node and set the value.
-    if (name === found) {
+    if (key === found) {
       return valueAt(node, index) === value
         ? node
         : forkAndSet(node, edit, index, value)
@@ -449,12 +474,12 @@ export const associate = (node, edit, shift, key, name, value, addedLeaf) => {
       const branch = mergeTwoLeaves(
         config,
         edit,
-        incShift(config, shift),
-        hash.create(utf8.encode(found)),
+        depth + 1,
+        Path.from(found),
         found,
         valueAt(node, index),
+        path,
         key,
-        name,
         value
       )
       addedLeaf.value = true
@@ -464,14 +489,13 @@ export const associate = (node, edit, shift, key, name, value, addedLeaf) => {
   }
   // If bit is set in the node bitmapt we have a branch under the current
   // hash slice.
-  else if (bitfield.get(nodemap, offset)) {
+  else if (BitField.get(nodemap, offset)) {
     const child = resolveNode(node, offset)
-    const newChild = associate(
-      node,
+    const newChild = child.associate(
       edit,
-      incShift(config, shift),
+      depth + 1,
+      path,
       key,
-      name,
       value,
       addedLeaf
     )
@@ -485,17 +509,15 @@ export const associate = (node, edit, shift, key, name, value, addedLeaf) => {
   // If we have neither node nor a key-value for this hash segment. We copy
   // current children and add new key-value pair
   else {
-    const index = bitfield.popcount(datamap, offset)
-    const position = keyPosition(index)
+    const index = BitField.popcount(datamap, offset)
     addedLeaf.value = true
 
-    const newNode =
-      /** @type {API.BitmapIndexedNode<T, K|R, API.Config<Bits, BitMap>>} */ (
-        node.fork(edit)
-      )
+    /** @type {API.BitmapIndexedNode<T, K|R, C>} */
+    const newNode = node.fork(edit)
+
     // Capture new entry in the data bitmap
-    newNode.datamap = bitfield.set(datamap, offset)
-    newNode.children.splice(position, 0, name, value)
+    newNode.datamap = BitField.set(datamap, offset)
+    newNode.children.splice(keyPosition(index), 0, key, value)
     return newNode
   }
 }
@@ -506,66 +528,73 @@ export const associate = (node, edit, shift, key, name, value, addedLeaf) => {
  * @template {API.Config} C
  * @param {API.BitmapIndexedNode<T, K, C>} node
  * @param {API.Edit|null} edit
- * @param {API.Uint32} shift
- * @param {ReturnType<C['hash']['create']>} key
- * @param {K} name
- * @param {{value:boolean}} removedLeaf
- * @returns {API.Node<T, K, C>}
+ * @param {K} key
+ * @param {{ value: boolean }} removedLeaf
+ * @returns {API.BitmapIndexedNode<T, K, C>}
  */
-export const dissociate = (node, edit, shift, key, name, removedLeaf) => {
-  const { datamap, nodemap, config } = node
-  const { bitfield, hash } = config
-  const offset = hash.slice(key, shift, incShift(config, shift))
+const remove = (node, edit, key, removedLeaf) =>
+  dissociate(node, edit, 0, node.config.Path.from(key), key, removedLeaf)
+
+export { remove as delete }
+
+/**
+ * @template T
+ * @template {string} K
+ * @template {API.Config} C
+ * @param {API.BitmapIndexedNode<T, K, C>} source
+ * @param {API.Edit|null} edit
+ * @param {API.Uint32} depth
+ * @param {ReturnType<C['Path']['from']>} path
+ * @param {K} key
+ * @param {{value:boolean}} removedLeaf
+ * @returns {API.BitmapIndexedNode<T, K, C>}
+ */
+export const dissociate = (source, edit, depth, path, key, removedLeaf) => {
+  const { datamap, nodemap, config } = source
+  const { BitField, Path } = config
+  const offset = Path.at(path, depth)
   // If bit is set in the data bitmap we have an entry under the
   // matching hash segment.
-  if (bitfield.get(datamap, offset)) {
-    const index = bitfield.popcount(datamap, offset)
+  if (BitField.get(datamap, offset)) {
+    const index = BitField.popcount(datamap, offset)
     // If key at a given index matches given `name` we fork a node and remove
-    // relevant entry
-    if (keyAt(node, index) === name) {
+    // the entry
+    if (key === keyAt(source, index)) {
       removedLeaf.value = true
-      const newNode = node.fork(edit)
-      newNode.datamap = bitfield.unset(datamap, offset)
-      newNode.children.splice(index, 2)
-      return newNode
+      const node = fork(source, edit)
+      // Update the bitmap
+      node.datamap = BitField.unset(source.datamap, offset)
+      // remove the child
+      node.children.splice(keyPosition(index), 2)
+      return node
     }
     // otherwise we don't have such entry so we return node back as is.
     else {
-      return node
+      return source
     }
   }
   // If bit is set in the node bitmapt we have a node under the
   // matching hash segment.
-  else if (bitfield.get(nodemap, offset)) {
-    const child = resolveNode(node, offset)
-    const newChild = child.dissociate(
-      edit,
-      incShift(config, shift),
-      key,
-      name,
-      removedLeaf
-    )
-    if (child === newChild) {
-      return node
+  else if (BitField.get(nodemap, offset)) {
+    const node = resolveNode(source, offset)
+    const child = node.dissociate(edit, depth + 1, path, key, removedLeaf)
+    // if child has a single element we need to canonicalize
+    if (hasSingleLeaf(child)) {
+      // if source has a single child, we collapse and return the child
+      // otherwise we inline the child.
+      return hasSingleNode(source)
+        ? child
+        : inlineChild(source, edit, offset, child)
+    } else if (node === child) {
+      return source
     } else {
-      if (hasSingleEntry(newChild)) {
-        if (
-          bitfield.popcount(datamap) === 0 &&
-          bitfield.popcount(nodemap) === 1
-        ) {
-          return newChild
-        } else {
-          return copyAndMigrateToInline(node, edit, offset, newChild)
-        }
-      } else {
-        return copyAndSetChild(node, edit, offset, newChild)
-      }
+      return copyAndSetChild(source, edit, offset, child)
     }
   }
   // If we have neither node nor a key-value for this hash segment this is a
   // noop.
   else {
-    return node
+    return source
   }
 }
 
@@ -694,60 +723,34 @@ export const forkAndSet = (node, edit, offset, value) => {
 }
 
 /**
- * @template T, U
- * @template {string} K
- * @template {API.Config} C
- * @param {API.BitmapIndexedNode<T, K, C>} node
- * @param {API.Edit|null} edit
- * @param {number} offset
- * @returns {API.BitmapIndexedNode<T, K, C>}
- */
-export const copyAndRemoveValue = (
-  { datamap, nodemap, children, config },
-  edit,
-  offset
-) => {
-  const { bitfield, hash } = config
-  const index = keyPosition(bitfield.popcount(datamap, offset))
-
-  return new BitmapIndexedNode(
-    edit,
-    bitfield.unset(datamap, offset),
-    nodemap,
-    [...children.slice(0, index), ...children.slice(index + 2)],
-    config
-  )
-}
-
-/**
  * @template T
  * @template {string} K
  * @template {API.Config} C
- * @param {API.BitmapIndexedNode<T, K, C>} node
+ * @param {API.BitmapIndexedNode<T, K, C>} source
  * @param {API.Edit|null} edit
  * @param {number} offset
  * @param {API.Node<T, K, C>} child
  * @returns {API.BitmapIndexedNode<T, K, C>}
  */
-export const copyAndMigrateToInline = (node, edit, offset, child) => {
-  const { datamap, nodemap, config } = node
-  const { bitfield } = config
-  const oldIndex = nodePosition(node, offset)
-  const newIndex = keyPosition(node.config.bitfield.popcount(datamap, offset))
-  const children = node.children.slice()
+export const inlineChild = (source, edit, offset, child) => {
+  const { datamap, nodemap, config } = source
+  const { BitField } = config
+  const node = fork(source, edit)
 
   // remove the node that we are inlining
-  children.splice(oldIndex, 1)
+  node.children.splice(nodePosition(source, offset), 1)
   // add key-value pair where it wolud fall
-  children.splice(newIndex, 0, child.children[0], child.children[1])
-
-  return new BitmapIndexedNode(
-    edit,
-    bitfield.set(datamap.slice(), offset),
-    bitfield.unset(nodemap.slice(), offset),
-    children,
-    node.config
+  node.children.splice(
+    keyPosition(BitField.popcount(datamap, offset)),
+    0,
+    child.children[0],
+    child.children[1]
   )
+
+  node.datamap = BitField.set(datamap, offset)
+  node.nodemap = BitField.unset(nodemap, offset)
+
+  return node
 }
 
 /**
@@ -761,7 +764,7 @@ export const copyAndMigrateToInline = (node, edit, offset, child) => {
  * @returns {API.BitmapIndexedNode<T, K, C>}
  */
 export const copyAndSetChild = (node, edit, offset, child) => {
-  const newNode = node.fork(edit)
+  const newNode = fork(node, edit)
   newNode.children[nodePosition(node, offset)] = child
   return newNode
 }
@@ -778,21 +781,21 @@ export const copyAndSetChild = (node, edit, offset, child) => {
  */
 export const migrateLeafToBranch = (source, edit, offset, branch) => {
   const { nodemap, datamap, config } = source
-  const { bitfield } = config
-  const index = bitfield.popcount(datamap, offset)
+  const { BitField } = config
+  const index = BitField.popcount(datamap, offset)
   // Previous id corresponds to the key position
   const oldId = keyPosition(index)
   const newId = nodePosition(source, offset)
 
-  const node = source.fork(edit)
-
-  // add a new branch
-  node.nodemap = bitfield.unset(nodemap, offset)
-  node.children.splice(newId, 0, branch)
+  const node = fork(source, edit)
 
   // remove an old leaf
-  node.datamap = bitfield.unset(datamap, offset)
+  node.datamap = BitField.unset(datamap, offset)
   node.children.splice(oldId, 2)
+
+  // add a new branch
+  node.nodemap = BitField.set(nodemap, offset)
+  node.children.splice(newId - 1, 0, branch)
 
   return node
 }
@@ -800,61 +803,59 @@ export const migrateLeafToBranch = (source, edit, offset, branch) => {
 /**
  * @template T
  * @template {string} K
- * @template Bits, BitMap
- * @param {API.Config<Bits, BitMap>} config
+ * @template {API.Config} C
+ * @param {C} config
  * @param {API.Edit|null} edit
- * @param {number} shift
- * @param {Bits} oldHash
+ * @param {number} depth
+ * @param {ReturnType<C['Path']['from']>} oldPath
  * @param {K} oldKey
  * @param {T} oldValue
- * @param {Bits} newHash
+ * @param {ReturnType<C['Path']['from']>} newPath
  * @param {K} newKey
  * @param {T} newValue
- * @returns {API.Node<T, K, API.Config<Bits, BitMap>>}
+ * @returns {API.Node<T, K, C>}
  */
 export const mergeTwoLeaves = (
   config,
   edit,
-  shift,
-  oldHash,
+  depth,
+  oldPath,
   oldKey,
   oldValue,
-  newHash,
+  newPath,
   newKey,
   newValue
 ) => {
-  const { bitfield, hash } = config
-  const nextShift = incShift(config, shift)
-  const newId = hash.slice(newHash, shift, nextShift)
-  const oldId = hash.slice(oldHash, shift, nextShift)
-  // If we have no more bits to read of hash we can not create another
-  // BitmapIndexedNode so instead we create a node containing (hash) colliding
+  const { BitField, Path } = config
+  // If we have reached end of the path we can no longer create another
+  // `BitmapIndexedNode`, instead we create a node containing (hash) colliding
   // entries
-  if (newId === oldId) {
-    if (nextShift >= hash.size) {
-      return new HashCollisionNode(
-        edit,
-        2,
-        [oldKey, oldValue, newKey, newValue],
-        config
-      )
-    }
-    // If hashes still match create another intermediery node and merge these
+  if (Path.size < depth) {
+    return new HashCollisionNode(
+      edit,
+      2,
+      [oldKey, oldValue, newKey, newValue],
+      config
+    )
+  } else {
+    const oldOffset = Path.at(oldPath, depth)
+    const newOffset = Path.at(newPath, depth)
+    // If offsets still match create another intermediery node and merge these
     // two nodes at next depth level.
-    else {
+    if (oldOffset === newOffset) {
       return new BitmapIndexedNode(
         edit,
-        bitfield.create(),
-        bitfield.set(bitfield.create(), oldId),
+        BitField.empty(),
+        BitField.of(oldOffset),
         [
           mergeTwoLeaves(
             config,
             edit,
-            incShift(config, shift),
-            oldHash,
+            depth + 1,
+            oldPath,
             oldKey,
             oldValue,
-            newHash,
+            newPath,
             newKey,
             newValue
           ),
@@ -862,23 +863,23 @@ export const mergeTwoLeaves = (
         config
       )
     }
-  }
-  // otherwise create new node with both key-value pairs as it's children
-  else {
-    return new BitmapIndexedNode(
-      edit,
-      bitfield.set(bitfield.set(bitfield.create(), oldId), newId),
-      bitfield.create(),
-      /** @type {API.Children<T, K, API.Config<Bits, BitMap>>} */
-      (
-        // We insert child with a lower index first so that we can derive it's
-        // index on access via popcount
-        oldId < newId
-          ? [oldKey, oldValue, newKey, newKey]
-          : [newKey, newKey, oldKey, oldValue]
-      ),
-      config
-    )
+    // otherwise create new node with both key-value pairs as it's children
+    else {
+      return new BitmapIndexedNode(
+        edit,
+        BitField.of(oldOffset, newOffset),
+        BitField.empty(),
+        /** @type {API.Children<T, K, C>} */
+        (
+          // We insert child with a lower index first so that we can derive it's
+          // index on access via popcount
+          oldOffset < newOffset
+            ? [oldKey, oldValue, newKey, newKey]
+            : [newKey, newKey, oldKey, oldValue]
+        ),
+        config
+      )
+    }
   }
 }
 
@@ -929,13 +930,7 @@ export const resolveNode = (node, offset) =>
  * @param {number} offset
  */
 const nodePosition = ({ children, nodemap, config }, offset) =>
-  children.length - 1 - config.bitfield.popcount(nodemap, offset)
-
-/**
- * @param {API.Config} config
- * @param {API.Uint32} shift
- */
-const incShift = (config, shift) => shift + config.bitWidth
+  children.length - 1 - config.BitField.popcount(nodemap, offset)
 
 /**
  * @param {API.Edit|null} owner
@@ -944,6 +939,26 @@ const incShift = (config, shift) => shift + config.bitWidth
 const canEdit = (owner, editor) => owner != null && owner === editor
 
 /**
- * @param {API.Node} node
+ * Returns `true` if node has a single entry. It also refines type to
+ * `BitmapIndexedNode` because `HashCollisionNode` is normalized to
+ * `BitmapIndexedNode` when it contains only a single entry.
+ *
+ * @template T
+ * @template {string} K
+ * @template {API.Config} C
+ * @param {API.Node<T, K, C>} node
+ * @returns {node is API.BitmapIndexedNode<T, K, C>}
  */
-const hasSingleEntry = node => node.nodeArity === 0 && node.dataArity === 1
+const hasSingleLeaf = node => node.nodeArity === 0 && node.dataArity === 1
+
+/**
+ * Returns `true` if node has a single childe node and 0 child leaves.
+ *
+ * @template T
+ * @template {string} K
+ * @template {API.Config} C
+ * @param {API.BitmapIndexedNode<T, K, C>} node
+ * @returns {node is API.BitmapIndexedNode<T, K, C>}
+ */
+const hasSingleNode = ({ config: { BitField }, datamap, nodemap }) =>
+  BitField.popcount(datamap) === 0 && BitField.popcount(nodemap) === 1

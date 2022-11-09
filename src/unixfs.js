@@ -1,4 +1,13 @@
-import * as HAMT from "./hamt.js"
+import * as HAMT from "./lib.js"
+
+/**
+ * @template T
+ * @template {string} K
+ * @template Bits, Bitmap
+ * @param {HAMT.HAMT<T, K, HAMT.Config<Bits, Bitmap>>} hamt
+ */
+export const bitField = ({ root, config }) =>
+  config.BitField.or(root.datamap, root.nodemap)
 
 /**
  * Maps HAMT node into IPFS UnixFS compatible format.
@@ -8,7 +17,7 @@ import * as HAMT from "./hamt.js"
  */
 export const iterate = function* (node) {
   const { datamap, nodemap, config } = node
-  const { bitfield } = config
+  const { BitField: bitfield } = config
   const size = bitfield.count(node.datamap)
   let bitOffset = 0
   let dataCount = 0

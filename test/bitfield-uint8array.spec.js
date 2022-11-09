@@ -1,5 +1,5 @@
 import { assert, test } from "./test.js"
-import * as Bitfield from "../src/bitfield/bitfield-uint8.js"
+import * as Bitfield from "../src/bitfield/Uint8Array.js"
 
 test("test bitfield", () => {
   const v0 = Bitfield.create(128)

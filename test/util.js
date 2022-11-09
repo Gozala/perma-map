@@ -1,18 +1,24 @@
-import * as HAMT from "../src/hamt.js"
+import * as HAMT from "../src/lib.js"
 import { murmur3128 } from "@multiformats/murmur3"
+import * as Path from "../src/path/InfiniteUint8Array.js"
+import * as BitField from "../src/bitfield/Uint8Array.js"
 
+const BIT_WIDTH = 8
 export const config = {
-  /**
-   * @param {Uint8Array} source
-   */
-  hash: source => /** @type {Uint8Array} */ (murmur3128.encode(source)),
-  hashSize: 8,
-  bitWidth: 8,
+  bitWidth: BIT_WIDTH,
+
+  Path: Path.configure({
+    bitWidth: BIT_WIDTH,
+    hash: source => /** @type {Uint8Array} */ (murmur3128.encode(source)),
+    hashSize: 8,
+  }),
+
+  BitField: BitField.configure(Math.pow(2, BIT_WIDTH)),
 }
 
 /**
  * @template T
- * @template {ReturnType<typeof HAMT.create>|ReturnType<typeof HAMT.createBuilder>} HAMT
+ * @template {ReturnType<typeof HAMT.empty>|ReturnType<typeof HAMT.builder>} HAMT
  * @param {HAMT} hamt
  * @param {Iterable<[string, T]>} entries
  */

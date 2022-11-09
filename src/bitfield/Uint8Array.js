@@ -1,4 +1,4 @@
-import { bitCount, popcount as popcount32 } from "./bitfield-uint32.js"
+import { bitCount, popcount as popcount32 } from "./Uint32.js"
 import * as API from "./api.js"
 
 /**
@@ -11,7 +11,8 @@ export const configure = size => {
   }
 
   return {
-    create: () => create(size),
+    empty: () => create(size),
+    of: (...bits) => createWith(size, bits),
     set,
     unset,
     get,
@@ -33,6 +34,22 @@ export const create = size => {
   }
 
   return new Uint8Array(size / 8)
+}
+
+/**
+ * Creates bitfield with specific bits set.
+ *
+ * @param {number} size
+ * @param {number[]} bits
+ * @returns {Uint8Array}
+ */
+const createWith = (size, bits) => {
+  let bitfield = create(size)
+  for (const index of bits) {
+    const { byte, byteOffset, bitOffset } = at(bitfield, index)
+    bitfield[byteOffset] = byte | (1 << bitOffset)
+  }
+  return bitfield
 }
 
 /**

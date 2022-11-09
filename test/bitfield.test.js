@@ -8,6 +8,7 @@ test("test bitfield", () => {
   assert.equal(Bitfield.popcount(bf, 0, 20), 0)
 
   Bitfield.set(bf, 10)
+  assert.deepEqual([...bf], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0])
   assert.equal(Bitfield.popcount(bf, 0, 20), 1)
 })
 

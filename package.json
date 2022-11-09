@@ -23,11 +23,13 @@
     "prepare": "tsc --build",
     "test:web": "playwright-test test/**/*.spec.js --cov && nyc report",
     "test:node": "c8 --check-coverage --branches 100 --functions 100 --lines 100 mocha test/**/*.spec.js",
-    "test": "mocha test/**/*.spec.js",
+    "test": "c8 --check-coverage --branches 0 --functions 0 --lines 0 mocha test/**/*.spec.js",
     "coverage": "c8 --reporter=html mocha test/**/*.spec.js && npm_config_yes=true npx st -d coverage -p 8080",
     "check": "tsc --build"
   },
-  "dependencies": {},
+  "dependencies": {
+    "murmurhash3js-revisited": "^3.0.0"
+  },
   "devDependencies": {
     "@multiformats/murmur3": "^2.0.0",
     "@types/chai": "^4.3.3",

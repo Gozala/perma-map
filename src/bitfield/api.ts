@@ -1,5 +1,7 @@
-export interface BitField<Self> {
-  create(): Self
+export interface BitField<Self extends unknown = unknown> {
+  empty(): Self
+
+  of(...bits: number[]): Self
   set(bitField: Self, index: Uint32): Self
   unset(bitField: Self, index: Uint32): Self
   get(bitField: Self, index: Uint32): boolean

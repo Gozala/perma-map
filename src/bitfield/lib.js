@@ -1,5 +1,5 @@
-import * as Uint8 from "./bitfield-uint8.js"
-import * as Uint32 from "./bitfield-uint32.js"
+import * as Uint8 from "./Uint8Array.js"
+import * as Uint32 from "./Uint32.js"
 import * as API from "./api.js"
 
 /**

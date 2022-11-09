@@ -1,4 +1,5 @@
 import type { BitField } from "../bitfield/api.js"
+import type { Path } from "../path/api.js"
 
 export interface Config<Bits = unknown, BitMap = Bits> {
   /**
@@ -17,18 +18,18 @@ export interface Config<Bits = unknown, BitMap = Bits> {
   bitWidth: Uint32
 
   /**
-   * Configuration used by the HAMT to calculate and consuming key hashes when
-   * building an index. It can be configured so that e.g 32 branch factor can be
-   * highly optimized.
+   * Configuration used by the HAMT to calculate tree path from the key. It used
+   * for building an index and traversal. It can be configured so that e.g 32
+   * branching factor is used in which case it will be highly optimized.
    */
-  hash: KeyHasher<Bits>
+  Path: Path<Bits>
 
   /**
    * Configuration used by the HAMT to represent child index (datamap & nodemap),
    * which is configurable allowing us to highly optimizing 32 barnch factor by
    * representing them as a single 32 bit integer as opposed to `Uint8Array`.
    */
-  bitfield: BitField<BitMap>
+  BitField: BitField<BitMap>
 }
 
 /**
@@ -51,7 +52,7 @@ export interface KeyHasher<Self> {
   create(keyBytes: Uint8Array): Self
 
   /**
-   * Size in bits of the hash hash this will produce
+   * Size in bits of the hash this will produce
    */
   size: number
 
@@ -73,6 +74,43 @@ export interface HAMT<
   readonly config: C
 }
 
+export interface PersistentHashMap<
+  T = unknown,
+  K extends string = string,
+  C extends Config = Config
+> extends HAMT<T, K, C> {
+  readonly tableSize: Uint32
+  readonly size: number
+
+  entries(): IterableIterator<[K, T]>
+  keys(): IterableIterator<K>
+  values(): IterableIterator<T>
+  [Symbol.iterator](): IterableIterator<[K, T]>
+
+  clone(): PersistentHashMap<T, K, C>
+  empty(): PersistentHashMap<T, K, C>
+  has(key: K): boolean
+  get(key: K): T | undefined
+  set<R extends string>(key: R, value: T): PersistentHashMap<T, K | R, C>
+  delete(key: K): PersistentHashMap<T, K, C>
+
+  createBuilder(): HashMapBuilder<T, K, C>
+}
+
+export interface HashMapBuilder<
+  T = unknown,
+  K extends string = string,
+  C extends Config = Config
+> extends HAMT<T, K, C> {
+  readonly tableSize: Uint32
+  readonly size: number
+
+  set<R extends string>(key: R, value: T): HashMapBuilder<T, K | R, C>
+  delete(key: K): HashMapBuilder<T, K, C>
+
+  build(): PersistentHashMap<T, K, C>
+}
+
 export interface Node<
   T = unknown,
   K extends string = string,
@@ -85,22 +123,22 @@ export interface Node<
 
   lookup<X>(
     shift: Uint32,
-    hash: ReturnType<C["hash"]["create"]>,
+    path: ReturnType<C["Path"]["from"]>,
     key: K,
     notFound: X
   ): T | X
   associate<R extends string>(
     edit: Edit | null,
-    shift: Uint32,
-    hash: ReturnType<C["hash"]["create"]>,
+    depth: Uint32,
+    path: ReturnType<C["Path"]["from"]>,
     key: K | R,
     value: T,
     leafAdded: { value: boolean }
-  ): Node<T, K | R>
+  ): Node<T, K | R, C>
   dissociate(
     edit: Edit | null,
-    shift: Uint32,
-    hash: ReturnType<C["hash"]["create"]>,
+    depth: Uint32,
+    path: ReturnType<C["Path"]["from"]>,
     key: K,
     removedLeaf: { value: boolean }
   ): Node<T, K, C>
@@ -109,7 +147,7 @@ export interface Node<
   keys(): IterableIterator<K>
   values(): IterableIterator<T>
 
-  fork(edit?: Edit | null): this
+  fork(edit?: Edit | null): Node<T, K, C>
 
   nodeArity: number
   dataArity: number
@@ -120,10 +158,26 @@ export interface BitmapIndexedNode<
   K extends string = string,
   C extends Config = Config
 > extends Node<T, K, C> {
-  datamap: ReturnType<C["bitfield"]["create"]>
-  nodemap: ReturnType<C["bitfield"]["create"]>
+  datamap: ReturnType<C["BitField"]["empty"]>
+  nodemap: ReturnType<C["BitField"]["empty"]>
 
-  empty(): BitmapIndexedNode<T, K, C>
+  associate<R extends string>(
+    edit: Edit | null,
+    depth: Uint32,
+    path: ReturnType<C["Path"]["from"]>,
+    key: K | R,
+    value: T,
+    leafAdded: { value: boolean }
+  ): BitmapIndexedNode<T, K | R, C>
+  dissociate(
+    edit: Edit | null,
+    depth: Uint32,
+    path: ReturnType<C["Path"]["from"]>,
+    key: K,
+    removedLeaf: { value: boolean }
+  ): BitmapIndexedNode<T, K, C>
+
+  fork(edit?: Edit | null): BitmapIndexedNode<T, K, C>
 }
 
 export interface HashCollisionNode<
@@ -135,6 +189,8 @@ export interface HashCollisionNode<
   count: number
   children: CollisionEntries<T, K>
   nodeArity: 0
+
+  fork(edit?: Edit | null): HashCollisionNode<T, K, C>
 }
 
 export type CollisionEntries<T, K> =
