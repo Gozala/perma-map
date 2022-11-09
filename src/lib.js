@@ -2,8 +2,9 @@ export * from "./hamt/api.js"
 import * as Node from "./node.js"
 import { create as createBitmapIndexedNode } from "./node.js"
 import * as API from "./hamt/api.js"
-import * as Path from "./path/Uint32.js"
-import * as BitField from "./bitfield/Uint32.js"
+import * as Uint32Path from "./path/Uint32.js"
+import * as Uint8ArrayPath from "./path/Uint8Array.js"
+import { configure as configureBitField } from "./bitfield/lib.js"
 
 const NOT_FOUND = new RangeError("Not Found")
 
@@ -42,11 +43,25 @@ const NOT_FOUND = new RangeError("Not Found")
  * @template [V=unknown]
  * @template {string} [K=string]
  * @template {API.Config} [C=API.Config<API.Uint32>]
- * @param {C} config
+ * @param {Partial<C>} [options]
  * @returns {API.PersistentHashMap<V, K, C>}
  */
-export const empty = (config = /** @type {C} */ (defaultConfig)) =>
-  new PersistentHashMap(0, createBitmapIndexedNode(config, null), config)
+export const empty = options => {
+  const config = configure(options)
+  return new PersistentHashMap(0, createBitmapIndexedNode(config, null), config)
+}
+
+/**
+ * @template {API.Config} [C=API.Config<API.Uint32>]
+ * @param {Partial<C>} config
+ */
+const configure = ({
+  bitWidth = 5,
+  BitField = configureBitField({ bitWidth }),
+  Path = bitWidth === 5
+    ? Uint32Path.configure({ bitWidth })
+    : Uint8ArrayPath.configure({ bitWidth }),
+} = {}) => /** @type {C} */ ({ bitWidth, BitField, Path })
 
 /**
  * Creates HashMap from the provided entries.
@@ -55,12 +70,11 @@ export const empty = (config = /** @type {C} */ (defaultConfig)) =>
  * @template {string} [K=string]
  * @template {API.Config} [C=API.Config<API.Uint32>]
  * @param {Iterable<[K, V]>} entries
- * @param {C} [config]
+ * @param {C} [options]
  * @returns {API.PersistentHashMap<V, K, C>}
  */
-export const from = (entries, config) => {
-  /** @type {API.HashMapBuilder<V, K, C>} */
-  const node = builder(config)
+export const from = (entries, options) => {
+  const node = /** @type {API.HashMapBuilder<V, K, C>} */ (builder(options))
   for (const [key, value] of entries) {
     node.set(key, value)
   }
@@ -92,27 +106,19 @@ export const get = (hamt, key, notFound = /** @type {U} */ (undefined)) =>
 /**
  * @template {string} K
  * @template T
- * @template {API.Config} [C=API.Config<API.Uint32>]
- * @param {C} [config]
+ * @template {API.Config} C
+ * @param {Partial<C>} [options]
  * @returns {API.HashMapBuilder<T, K, C>}
  */
-export const builder = (config = /** @type {C} */ (defaultConfig)) => {
+export const builder = options => {
   const edit = {}
+  const config = configure(options)
   return new HashMapBuilder(
     edit,
     0,
     createBitmapIndexedNode(config, edit),
     config
   )
-}
-
-/**
- * @type {API.Config<API.Uint32>}
- */
-const defaultConfig = {
-  bitWidth: 32,
-  Path: Path.configure({ bitWidth: 32 }),
-  BitField,
 }
 
 /**

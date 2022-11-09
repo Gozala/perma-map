@@ -1,4 +1,11 @@
 import * as HAMT from "./lib.js"
+import * as Path from "../src/path/InfiniteUint8Array.js"
+
+export const bitWidth = 8
+export const config = {
+  bitWidth,
+  Path: Path.configure({ bitWidth }),
+}
 
 /**
  * @template T
@@ -18,7 +25,7 @@ export const bitField = ({ root, config }) =>
 export const iterate = function* (node) {
   const { datamap, nodemap, config } = node
   const { BitField: bitfield } = config
-  const size = bitfield.count(node.datamap)
+  const size = bitfield.size(node.datamap)
   let bitOffset = 0
   let dataCount = 0
   let nodeCount = 0

@@ -1,7 +1,7 @@
 export interface BitField<Self extends unknown = unknown> {
-  empty(): Self
+  empty(size: Uint32): Self
 
-  of(...bits: number[]): Self
+  from(bits: number[], size: Uint32): Self
   set(bitField: Self, index: Uint32): Self
   unset(bitField: Self, index: Uint32): Self
   get(bitField: Self, index: Uint32): boolean
@@ -14,7 +14,7 @@ export interface BitField<Self extends unknown = unknown> {
   /**
    * Countns number of bits in the given bitfield.
    */
-  count(self: Self): Uint32
+  size(self: Self): Uint32
 
   toBytes(bitfield: Self): Uint8Array
   fromBytes(bytes: Uint8Array): Self

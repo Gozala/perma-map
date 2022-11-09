@@ -1,20 +1,4 @@
 import * as HAMT from "../src/lib.js"
-import { murmur3128 } from "@multiformats/murmur3"
-import * as Path from "../src/path/InfiniteUint8Array.js"
-import * as BitField from "../src/bitfield/Uint8Array.js"
-
-const BIT_WIDTH = 8
-export const config = {
-  bitWidth: BIT_WIDTH,
-
-  Path: Path.configure({
-    bitWidth: BIT_WIDTH,
-    hash: source => /** @type {Uint8Array} */ (murmur3128.encode(source)),
-    hashSize: 8,
-  }),
-
-  BitField: BitField.configure(Math.pow(2, BIT_WIDTH)),
-}
 
 /**
  * @template T

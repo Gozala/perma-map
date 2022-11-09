@@ -1,18 +1,8 @@
-import * as Uint8 from "./Uint8Array.js"
-import * as Uint32 from "./Uint32.js"
-import * as API from "./api.js"
+import * as Uint32BitField from "./Uint32.js"
+import * as Uint8ArrayBitField from "./Uint8Array.js"
 
 /**
- *
- * @param {API.Uint32} size
- * @returns {API.BitField<Uint8Array>|API.BitField<API.Uint32>}
+ * @param {{bitWidth: number}} options
  */
-export const configure = (size = 32) => {
-  if (size === 32) {
-    return Uint32
-  } else {
-    return Uint8.configure(size)
-  }
-}
-
-export { API }
+export const configure = ({ bitWidth }) =>
+  bitWidth === 5 ? Uint32BitField : Uint8ArrayBitField

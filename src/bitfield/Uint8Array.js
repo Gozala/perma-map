@@ -3,32 +3,8 @@ import * as API from "./api.js"
 
 /**
  * @param {number} size
- * @returns {API.BitField<Uint8Array>}
  */
-export const configure = size => {
-  if (size % 8 !== 0) {
-    throw new Error(`Must be multiple of 8`)
-  }
-
-  return {
-    empty: () => create(size),
-    of: (...bits) => createWith(size, bits),
-    set,
-    unset,
-    get,
-    toBytes,
-    fromBytes,
-    popcount,
-    and,
-    or,
-    count,
-  }
-}
-
-/**
- * @param {number} size
- */
-export const create = size => {
+export const empty = (size = 256) => {
   if (size % 8 !== 0) {
     throw new Error(`Must be multiple of 8`)
   }
@@ -39,12 +15,12 @@ export const create = size => {
 /**
  * Creates bitfield with specific bits set.
  *
- * @param {number} size
  * @param {number[]} bits
+ * @param {number} [size]
  * @returns {Uint8Array}
  */
-const createWith = (size, bits) => {
-  let bitfield = create(size)
+export const from = (bits, size) => {
+  let bitfield = empty(size)
   for (const index of bits) {
     const { byte, byteOffset, bitOffset } = at(bitfield, index)
     bitfield[byteOffset] = byte | (1 << bitOffset)
@@ -55,7 +31,7 @@ const createWith = (size, bits) => {
 /**
  * @param {Uint8Array} bitfield
  */
-export const count = bitfield => bitfield.byteLength * 8
+export const size = bitfield => bitfield.byteLength * 8
 
 /**
  * Compute offset for the given index

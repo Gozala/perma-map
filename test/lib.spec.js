@@ -2,10 +2,10 @@ import { assert, test } from "./test.js"
 import * as HAMT from "../src/lib.js"
 import * as UnixFS from "../src/unixfs.js"
 
-import { config, insert, iterate, byKey, byName } from "./util.js"
+import { insert, iterate, byKey, byName } from "./util.js"
 
 test("hamt basic", () => {
-  const v0 = HAMT.empty(config)
+  const v0 = HAMT.empty(UnixFS.config)
 
   assert.equal(v0.tableSize, 256)
   assert.equal(v0.size, 0)
@@ -35,7 +35,7 @@ test("hamt basic", () => {
 })
 
 test("HAMT can override a value", () => {
-  const v0 = HAMT.empty(config)
+  const v0 = HAMT.empty(UnixFS.config)
   const v1 = v0.set("key", "value")
   const v2 = v1.set("key", "other value")
 
@@ -44,7 +44,7 @@ test("HAMT can override a value", () => {
 })
 
 test("HAMT setting same value is noop", () => {
-  const v0 = HAMT.empty(config)
+  const v0 = HAMT.empty(UnixFS.config)
   const v1 = v0.set("key", "value")
 
   const v2 = v1.set("key", "value")
@@ -53,7 +53,7 @@ test("HAMT setting same value is noop", () => {
 })
 
 test("HAMT can remove a non existing value", () => {
-  const v0 = HAMT.empty(config)
+  const v0 = HAMT.empty(UnixFS.config)
   const v1 = v0.delete("a key which does not exist")
 
   assert.equal(v0, v1)
@@ -61,7 +61,7 @@ test("HAMT can remove a non existing value", () => {
 })
 
 test("HAMT can remove an existing value", () => {
-  const v0 = HAMT.empty(config)
+  const v0 = HAMT.empty(UnixFS.config)
   const v1 = v0.set("key", "value")
   const v2 = v1.delete("key")
 
@@ -74,7 +74,7 @@ test("HAMT can remove an existing value", () => {
 })
 
 test("HAMT should count leaves", () => {
-  const v0 = HAMT.empty(config)
+  const v0 = HAMT.empty(UnixFS.config)
   assert.equal(v0.size, 0)
 
   const v1 = insert(v0, iterate(400))
@@ -91,7 +91,7 @@ test("HAMT should count leaves", () => {
 })
 
 test("HAMT should iterate over entries", () => {
-  const v0 = HAMT.empty(config)
+  const v0 = HAMT.empty(UnixFS.config)
   assert.equal(v0.size, 0)
 
   const SIZE = 400
@@ -101,7 +101,7 @@ test("HAMT should iterate over entries", () => {
 })
 
 test("HAMT should be iterable iterate ", () => {
-  const v0 = HAMT.empty(config)
+  const v0 = HAMT.empty(UnixFS.config)
   assert.equal(v0.size, 0)
 
   const v1 = insert(v0, iterate(400))
@@ -109,7 +109,7 @@ test("HAMT should be iterable iterate ", () => {
 })
 
 test("HAMT should be iterate over keys", () => {
-  const v0 = HAMT.empty(config)
+  const v0 = HAMT.empty(UnixFS.config)
   assert.equal(v0.size, 0)
 
   const v1 = insert(v0, iterate(400))
@@ -120,7 +120,7 @@ test("HAMT should be iterate over keys", () => {
 })
 
 test("HAMT should be iterate over values", () => {
-  const v0 = HAMT.empty(config)
+  const v0 = HAMT.empty(UnixFS.config)
   assert.equal(v0.size, 0)
 
   const v1 = insert(v0, iterate(400))
@@ -132,7 +132,7 @@ test("HAMT should be iterate over values", () => {
 
 test("HAMT insert & remove many but find remaining", () => {
   const entries = [...iterate(400)]
-  let hamt = insert(HAMT.empty(config), entries)
+  let hamt = insert(HAMT.empty(UnixFS.config), entries)
 
   const [key, value] = /** @type {[string, string]} */ (entries.pop())
   for (const [key, value] of entries.reverse()) {
@@ -144,7 +144,7 @@ test("HAMT insert & remove many but find remaining", () => {
 
   assert.deepEqual(
     hamt,
-    HAMT.empty(config).set(key, value),
+    HAMT.empty(UnixFS.config).set(key, value),
     "collapsed all nodes"
   )
 
@@ -153,15 +153,15 @@ test("HAMT insert & remove many but find remaining", () => {
 
 test("HAMT insert & remove many but find remaining", () => {
   const entries = [...iterate(400)]
-  let hamt = insert(HAMT.empty(config), entries)
+  let hamt = insert(HAMT.empty(UnixFS.config), entries)
 
-  assert.deepEqual(hamt.empty(), HAMT.empty(config))
+  assert.deepEqual(hamt.empty(), HAMT.empty(UnixFS.config))
 })
 
 test("HAMT can use builder for batch inserts", () => {
   const size = 4000
   const entries = [...iterate(size)]
-  const b0 = HAMT.builder(config)
+  const b0 = HAMT.builder(UnixFS.config)
   assert.equal(b0.size, 0)
   const b1 = insert(b0, entries)
   assert.equal(b0, b1)
@@ -178,7 +178,7 @@ test("HAMT can use builder for batch inserts", () => {
 
 test.skip("bug hunt", () => {
   const MAX = 4000
-  let hamt = HAMT.empty(config).createBuilder()
+  let hamt = HAMT.empty(UnixFS.config).createBuilder()
 
   let n = 0
   while (n < MAX) {
@@ -200,7 +200,7 @@ test.skip("bug hunt", () => {
 test("HAMT can use builder for batch deletes", () => {
   const size = 4000
   const entries = [...iterate(size)]
-  const v0 = HAMT.empty(config)
+  const v0 = HAMT.empty(UnixFS.config)
   assert.equal(v0.size, 0)
 
   const v1 = insert(v0, iterate(size))
@@ -219,25 +219,25 @@ test("HAMT can use builder for batch deletes", () => {
 
   assert.deepEqual(
     v2,
-    HAMT.builder(config).set(key, value).build(),
+    HAMT.builder(UnixFS.config).set(key, value).build(),
     "collapsed all nodes"
   )
 })
 
 test("HAMT can short circuit on empty builder", () => {
-  const b1 = HAMT.builder(config)
+  const b1 = HAMT.builder(UnixFS.config)
   assert.equal(b1, b1.delete("key"))
   assert.equal(b1.size, 0)
 })
 
 test("HAMT can clone", () => {
-  const b = insert(HAMT.builder(config), iterate(300))
+  const b = insert(HAMT.builder(UnixFS.config), iterate(300))
   const v1 = b.build()
   assert.deepEqual(v1, v1.clone())
 })
 
 test("HAMT emulate hash collision", () => {
-  const v1 = insert(HAMT.builder(config), iterate(300)).build()
+  const v1 = insert(HAMT.builder(UnixFS.config), iterate(300)).build()
   const key = v1.root.children[3 * 2]
   // Pretent we had a hash collision
   v1.root.children[3 * 2] = "collider"

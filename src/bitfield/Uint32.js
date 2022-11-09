@@ -2,13 +2,23 @@ import * as API from "./api.js"
 
 export { API }
 
-export const empty = () => 0
+/**
+ * @param {API.Uint32} size
+ */
+export const empty = (size = 32) => {
+  if (size !== 32) {
+    throw new Error(`Uint32 BitField expects size 32 instead got ${size}`)
+  }
+
+  return 0
+}
 
 /**
- * @param  {...number} bits
+ * @param  {API.Uint32[]} bits
+ * @param {API.Uint32} [size]
  */
-export const of = (...bits) => {
-  let bitfield = empty()
+export const from = (bits, size) => {
+  let bitfield = empty(size)
   for (const bit of bits) {
     bitfield = set(bitfield, bit)
   }
@@ -18,7 +28,7 @@ export const of = (...bits) => {
 /**
  * @param {API.Uint32} _bitField
  */
-export const count = _bitField => 32
+export const size = _bitField => 32
 
 /**
  * This reads out chunk of the hash at specefic shift offset

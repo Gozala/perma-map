@@ -11,6 +11,16 @@ test("test bitfield", () => {
   assert.equal(Bitfield.popcount(v1, 20), 1)
 })
 
+test("test BitField.from", () => {
+  const v0 = Bitfield.from([7, 9, 0])
+  let n = 0
+
+  while (n < Bitfield.size(v0)) {
+    assert.equal(Bitfield.get(v0, n), [7, 9, 0].includes(n))
+    n++
+  }
+})
+
 test("test bitfield", () => {
   const v0 = Bitfield.empty()
 
@@ -30,4 +40,16 @@ test("test toBytes / fromBytes", () => {
   const b2 = Uint8Array.from([0, 0, 0, 2])
   assert.deepEqual(Bitfield.toBytes(v2), b2)
   assert.deepEqual(Bitfield.fromBytes(b2), v2)
+})
+
+test("throws when not enough bytes are provided", () => {
+  assert.throws(
+    () => Bitfield.fromBytes(Uint8Array.from([0, 0, 0])),
+    /Expected 4 bytes instead got 3/
+  )
+
+  assert.throws(
+    () => Bitfield.fromBytes(Uint8Array.from([0, 0, 0, 0, 0])),
+    /Expected 4 bytes instead got 5/
+  )
 })

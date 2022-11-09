@@ -8,7 +8,7 @@ const utf8 = new TextEncoder()
  * @typedef {(bytes:Uint8Array) => API.Uint32} Hasher
  * @type {Hasher}
  */
-export const hash32 = murmur.x86.hash32
+export const hash32 = murmur.x64.hash126
 
 /**
  * @param {Partial<API.Options<API.Uint32>>} options

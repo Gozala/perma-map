@@ -1,12 +1,23 @@
 import * as API from "./api.js"
 import * as Bits from "../bits.js"
 const utf8 = new TextEncoder()
+import { murmur3128 } from "@multiformats/murmur3"
 
 /**
- * @param {API.Options<Uint8Array>} options
+ * @param {Uint8Array} bytes
+ */
+export const hash128 = bytes =>
+  /** @type {Uint8Array} */ (murmur3128.encode(bytes))
+
+/**
+ * @param {Partial<API.Options<Uint8Array>>} options
  * @returns {API.Path<Uint8Array>}
  */
-export const configure = ({ bitWidth = 8, hash, hashSize }) => {
+export const configure = ({
+  bitWidth = 8,
+  hash = hash128,
+  hashSize = hash(new Uint8Array()).byteLength,
+} = {}) => {
   /**
    * @param {Uint8Array} path
    * @param {number} depth

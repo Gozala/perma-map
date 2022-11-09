@@ -365,8 +365,8 @@ const defaultConfig = { bitWidth: 32, BitField, Path }
 export const create = (config, edit = null) =>
   new BitmapIndexedNode(
     edit,
-    config.BitField.empty(),
-    config.BitField.empty(),
+    config.BitField.empty(Math.pow(2, config.bitWidth)),
+    config.BitField.empty(Math.pow(2, config.bitWidth)),
     /** @type {API.Children<T, K, C>} */ ([]),
     config
   )
@@ -845,8 +845,8 @@ export const mergeTwoLeaves = (
     if (oldOffset === newOffset) {
       return new BitmapIndexedNode(
         edit,
-        BitField.empty(),
-        BitField.of(oldOffset),
+        BitField.empty(Math.pow(2, config.bitWidth)),
+        BitField.from([oldOffset], Math.pow(2, config.bitWidth)),
         [
           mergeTwoLeaves(
             config,
@@ -867,8 +867,8 @@ export const mergeTwoLeaves = (
     else {
       return new BitmapIndexedNode(
         edit,
-        BitField.of(oldOffset, newOffset),
-        BitField.empty(),
+        BitField.from([oldOffset, newOffset], Math.pow(2, config.bitWidth)),
+        BitField.empty(Math.pow(2, config.bitWidth)),
         /** @type {API.Children<T, K, C>} */
         (
           // We insert child with a lower index first so that we can derive it's
