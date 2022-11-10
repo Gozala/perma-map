@@ -1,5 +1,5 @@
 {
-  "name": "alucha",
+  "name": "@perma/map",
   "description": "Immutable hash maps implemented as hash array papped tries",
   "version": "0.0.1",
   "keywords": [
@@ -15,9 +15,9 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/gozala/hashtrie.git"
+    "url": "https://github.com/gozala/perma-map.git"
   },
-  "homepage": "https://github.com/gozala/hashtrie.git",
+  "homepage": "https://github.com/gozala/perma-map.git",
   "scripts": {
     "build": "tsc --build",
     "prepare": "tsc --build",
