@@ -1,0 +1,273 @@
+export default {
+  bitfield: [
+    48, 100, 230, 53, 80, 10, 67, 146, 76, 193, 140, 60, 208, 160, 172, 72, 52,
+    38, 164, 18, 160, 132, 182, 126, 18, 242, 28, 101, 72, 136, 229, 80,
+  ],
+  links: [
+    { prefix: "04", key: "69", value: "69" },
+    { prefix: "06", key: "30", value: "30" },
+    { prefix: "08", key: "82", value: "82" },
+    { prefix: "0A", key: "72", value: "72" },
+    { prefix: "0D", key: "5", value: "5" },
+    { prefix: "0E", key: "100", value: "100" },
+    { prefix: "0F", key: "57", value: "57" },
+    { prefix: "13", key: "108", value: "108" },
+    { prefix: "17", key: "76", value: "76" },
+    { prefix: "1B", key: "107", value: "107" },
+    {
+      prefix: "1E",
+      bitfield: [8, 0, 0, 2, 0, 0, 0, 0],
+      links: [
+        { prefix: "21", key: "36", value: "36" },
+        { prefix: "3B", key: "61", value: "61" },
+      ],
+    },
+    { prefix: "20", key: "105", value: "105" },
+    {
+      prefix: "22",
+      bitfield: [
+        4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 34, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0,
+      ],
+      links: [
+        { prefix: "51", key: "97", value: "97" },
+        { prefix: "55", key: "50", value: "50" },
+        { prefix: "D2", key: "25", value: "25" },
+      ],
+    },
+    {
+      prefix: "25",
+      bitfield: [4, 0, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 0, 0],
+      links: [
+        { prefix: "2E", key: "35", value: "35" },
+        { prefix: "6A", key: "18", value: "18" },
+      ],
+    },
+    { prefix: "26", key: "74", value: "74" },
+    { prefix: "2A", key: "0", value: "0" },
+    { prefix: "2B", key: "28", value: "28" },
+    { prefix: "2C", key: "14", value: "14" },
+    { prefix: "31", key: "8", value: "8" },
+    { prefix: "34", key: "51", value: "51" },
+    { prefix: "35", key: "62", value: "62" },
+    { prefix: "36", key: "70", value: "70" },
+    { prefix: "37", key: "44", value: "44" },
+    { prefix: "39", key: "73", value: "73" },
+    {
+      prefix: "3C",
+      bitfield: [
+        1, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+      ],
+      links: [
+        { prefix: "F5", key: "86", value: "86" },
+        { prefix: "F8", key: "109", value: "109" },
+      ],
+    },
+    { prefix: "41", key: "84", value: "84" },
+    { prefix: "42", key: "31", value: "31" },
+    { prefix: "43", key: "20", value: "20" },
+    { prefix: "44", key: "101", value: "101" },
+    {
+      prefix: "45",
+      bitfield: [
+        128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0,
+      ],
+      links: [
+        { prefix: "6C", key: "71", value: "71" },
+        { prefix: "E7", key: "63", value: "63" },
+      ],
+    },
+    { prefix: "46", key: "83", value: "83" },
+    {
+      prefix: "49",
+      bitfield: [
+        32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0,
+      ],
+      links: [
+        { prefix: "76", key: "2", value: "2" },
+        { prefix: "C5", key: "22", value: "22" },
+      ],
+    },
+    { prefix: "4A", key: "12", value: "12" },
+    { prefix: "4C", key: "23", value: "23" },
+    { prefix: "4D", key: "24", value: "24" },
+    { prefix: "4F", key: "33", value: "33" },
+    {
+      prefix: "52",
+      bitfield: [
+        16, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0,
+      ],
+      links: [
+        { prefix: "B8", key: "114", value: "114" },
+        { prefix: "F4", key: "95", value: "95" },
+      ],
+    },
+    { prefix: "57", key: "38", value: "38" },
+    {
+      prefix: "5D",
+      bitfield: [
+        16, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0,
+      ],
+      links: [
+        { prefix: "A3", key: "29", value: "29" },
+        { prefix: "E4", key: "37", value: "37" },
+      ],
+    },
+    { prefix: "5F", key: "118", value: "118" },
+    { prefix: "61", key: "116", value: "116" },
+    { prefix: "64", key: "77", value: "77" },
+    { prefix: "6A", key: "88", value: "88" },
+    { prefix: "6D", key: "80", value: "80" },
+    { prefix: "6F", key: "11", value: "11" },
+    { prefix: "71", key: "1", value: "1" },
+    {
+      prefix: "72",
+      bitfield: [
+        32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0,
+      ],
+      links: [
+        { prefix: "91", key: "78", value: "78" },
+        { prefix: "F5", key: "96", value: "96" },
+      ],
+    },
+    { prefix: "75", key: "66", value: "66" },
+    { prefix: "7A", key: "41", value: "41" },
+    { prefix: "7C", key: "54", value: "54" },
+    {
+      prefix: "7D",
+      bitfield: [
+        4, 0, 0, 0, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0,
+      ],
+      links: [
+        { prefix: "BD", key: "27", value: "27" },
+        { prefix: "DA", key: "119", value: "119" },
+      ],
+    },
+    { prefix: "83", key: "6", value: "6" },
+    { prefix: "86", key: "90", value: "90" },
+    {
+      prefix: "8A",
+      bitfield: [
+        32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+      ],
+      links: [
+        { prefix: "28", key: "46", value: "46" },
+        { prefix: "B5", key: "115", value: "115" },
+      ],
+    },
+    { prefix: "8B", key: "55", value: "55" },
+    { prefix: "8D", key: "81", value: "81" },
+    { prefix: "8F", key: "16", value: "16" },
+    { prefix: "95", key: "94", value: "94" },
+    { prefix: "97", key: "117", value: "117" },
+    { prefix: "9C", key: "64", value: "64" },
+    {
+      prefix: "9E",
+      bitfield: [
+        128, 0, 0, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0,
+      ],
+      links: [
+        { prefix: "96", key: "104", value: "104" },
+        { prefix: "DF", key: "67", value: "67" },
+      ],
+    },
+    { prefix: "9F", key: "110", value: "110" },
+    { prefix: "A2", key: "58", value: "58" },
+    { prefix: "A3", key: "32", value: "32" },
+    { prefix: "A4", key: "103", value: "103" },
+    { prefix: "A5", key: "40", value: "40" },
+    { prefix: "AA", key: "26", value: "26" },
+    { prefix: "AB", key: "43", value: "43" },
+    { prefix: "AF", key: "39", value: "39" },
+    { prefix: "B0", key: "59", value: "59" },
+    { prefix: "B6", key: "42", value: "42" },
+    { prefix: "B7", key: "79", value: "79" },
+    { prefix: "BA", key: "47", value: "47" },
+    { prefix: "BB", key: "19", value: "19" },
+    { prefix: "BE", key: "113", value: "113" },
+    { prefix: "C1", key: "13", value: "13" },
+    { prefix: "C4", key: "48", value: "48" },
+    { prefix: "C7", key: "87", value: "87" },
+    { prefix: "C8", key: "93", value: "93" },
+    { prefix: "C9", key: "49", value: "49" },
+    { prefix: "CE", key: "75", value: "75" },
+    {
+      prefix: "D1",
+      bitfield: [
+        4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 64, 0, 0,
+        0, 0, 0, 0, 0,
+      ],
+      links: [
+        { prefix: "3E", key: "98", value: "98" },
+        { prefix: "92", key: "60", value: "60" },
+        { prefix: "E2", key: "34", value: "34" },
+      ],
+    },
+    { prefix: "D3", key: "21", value: "21" },
+    { prefix: "DC", key: "7", value: "7" },
+    { prefix: "DE", key: "106", value: "106" },
+    { prefix: "E0", key: "17", value: "17" },
+    { prefix: "E2", key: "99", value: "99" },
+    { prefix: "E4", key: "68", value: "68" },
+    { prefix: "E5", key: "89", value: "89" },
+    {
+      prefix: "E9",
+      bitfield: [
+        8, 0, 0, 0, 0, 0, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      ],
+      links: [
+        { prefix: "7F", key: "9", value: "9" },
+        { prefix: "AB", key: "91", value: "91" },
+      ],
+    },
+    { prefix: "EA", key: "53", value: "53" },
+    {
+      prefix: "ED",
+      bitfield: [
+        16, 0, 0, 0, 0, 0, 0, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+      ],
+      links: [
+        { prefix: "C7", key: "15", value: "15" },
+        { prefix: "FC", key: "10", value: "10" },
+      ],
+    },
+    { prefix: "EE", key: "112", value: "112" },
+    { prefix: "EF", key: "65", value: "65" },
+    { prefix: "F2", key: "102", value: "102" },
+    {
+      prefix: "F5",
+      bitfield: [
+        16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0,
+      ],
+      links: [
+        { prefix: "6B", key: "92", value: "92" },
+        { prefix: "F4", key: "52", value: "52" },
+      ],
+    },
+    { prefix: "F6", key: "4", value: "4" },
+    { prefix: "FC", key: "85", value: "85" },
+    {
+      prefix: "FD",
+      bitfield: [
+        128, 0, 0, 0, 0, 0, 0, 0, 0, 128, 0, 0, 4, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0,
+      ],
+      links: [
+        { prefix: "53", key: "45", value: "45" },
+        { prefix: "72", key: "56", value: "56" },
+        { prefix: "8F", key: "111", value: "111" },
+        { prefix: "D7", key: "3", value: "3" },
+      ],
+    },
+  ],
+}

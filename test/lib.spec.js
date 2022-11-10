@@ -24,13 +24,6 @@ test("hamt basic", () => {
   assert.equal(v0.size, 0)
   assert.equal(v2.get("key"), "value")
   assert.equal(v1.get("key"), undefined)
-
-  assert.deepEqual(
-    UnixFS.bitField(v2),
-    Uint8Array.from([
-      1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    ])
-  )
 })
 
 test("HAMT can override a value", () => {
@@ -78,15 +71,6 @@ test("HAMT should count leaves", () => {
 
   const v1 = insert(v0, iterate(400))
   assert.equal(v1.size, 400)
-  assert.deepEqual(
-    UnixFS.bitField(v1),
-    Uint8Array.from([
-      62, 255, 230, 253, 255, 159, 103, 255, 221, 255, 175, 124, 253, 230, 255,
-      219, 183, 247, 255, 251, 189, 156, 255, 126, 115, 250, 158, 245, 235, 223,
-      245, 251,
-    ]),
-    "arrives to same bitfield as js-ipfs"
-  )
 })
 
 test("HAMT should iterate over entries", () => {
