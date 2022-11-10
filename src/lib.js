@@ -70,7 +70,7 @@ const configure = ({
  * @template {string} [K=string]
  * @template {API.Config} [C=API.Config<API.Uint32>]
  * @param {Iterable<[K, V]>} entries
- * @param {C} [options]
+ * @param {Partial<C>} [options]
  * @returns {API.PersistentHashMap<V, K, C>}
  */
 export const from = (entries, options) => {
