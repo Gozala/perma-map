@@ -31,7 +31,7 @@ export const from = (bits, size) => {
 export const size = _bitField => 32
 
 /**
- * This reads out chunk of the hash at specefic shift offset
+ * This reads out chunk of the hash at specific shift offset
  * (which is depth * SHIFT_SIZE) which is a number between 0 to 31 and
  * corresponds to a branch where this key at this depth belongs to.
  *

@@ -14,7 +14,7 @@ const NOT_FOUND = new RangeError("Not Found")
  * children by the first `bitWidth` bits of the key hash. In the next layer
  * next `bitWidth` number of bits of the key hash are used to determine
  * placement of it's children and so on. Each node in the tree will hold
- * `2 * bitWidth` number of elements.
+ * `2 ** bitWidth` number of elements.
  *
  * For example when we insert an entry named `result` it will generate a
  * folowing hash (with murmur3 32) `442064690` which in binary would be
@@ -54,6 +54,7 @@ export const empty = options => {
 /**
  * @template {API.Config} [C=API.Config<API.Uint32>]
  * @param {Partial<C>} config
+ * @returns {C}
  */
 const configure = ({
   bitWidth = 5,

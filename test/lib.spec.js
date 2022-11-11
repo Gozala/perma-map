@@ -83,7 +83,7 @@ test("HAMT should iterate over entries", () => {
   assert.deepEqual([...v1.entries()].sort(byKey), [...iterate(SIZE)])
 })
 
-test("HAMT should be iterable iterate ", () => {
+test("HAMT iterable should iterate values", () => {
   const v0 = HAMT.empty(UnixFS.config)
   assert.equal(v0.size, 0)
 
