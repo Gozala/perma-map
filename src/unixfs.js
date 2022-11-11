@@ -2,7 +2,9 @@ import * as HAMT from "./lib.js"
 import * as Node from "./node.js"
 import * as Path from "./path/InfiniteUint8Array.js"
 
-export * from "./hamt/api.js"
+export * from "./api.js"
+
+export { Path }
 
 export const bitWidth = 8
 export const config = {
@@ -10,13 +12,35 @@ export const config = {
   Path: Path.configure({ bitWidth }),
 }
 
-export const empty = HAMT.empty.bind(config)
-export const builder = HAMT.builder.bind(config)
+/**
+ * @template [T=unknown]
+ * @template {string} [K=string]
+ * @template {HAMT.Config} [C=HAMT.Config<Uint8Array>]
+ * @param {Partial<C>} options
+ * @returns {HAMT.PersistentHashMap<T, K, C>}
+ */
+export const empty = (options = /** @type {C} */ (config)) =>
+  HAMT.empty(options)
 
 /**
- * @param {Iterable<[string, unknown]>} entries
+ * @template [T=unknown]
+ * @template {string} [K=string]
+ * @template {HAMT.Config} [C=HAMT.Config<Uint8Array>]
+ * @param {Partial<C>} options
+ * @returns {HAMT.HashMapBuilder<T, K, C>}
  */
-export const from = entries => HAMT.from(entries, config)
+export const builder = (options = /** @type {C} */ (config)) =>
+  HAMT.builder(options)
+
+/**
+ * @template [V=unknown]
+ * @template {string} [K=string]
+ * @template {HAMT.Config} [C=HAMT.Config<Uint8Array>]
+ * @param {Iterable<[K, V]>} entries
+ * @param {Partial<C>} options
+ */
+export const from = (entries, options = /** @type {C} */ (config)) =>
+  HAMT.from(entries, options)
 
 /**
  * @template T

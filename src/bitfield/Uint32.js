@@ -7,7 +7,7 @@ export { API }
  */
 export const empty = (size = 32) => {
   if (size !== 32) {
-    throw new Error(`Uint32 BitField expects size 32 instead got ${size}`)
+    throw new Error(`Uint32 BitField does not support size: ${size}`)
   }
 
   return 0

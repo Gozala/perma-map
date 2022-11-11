@@ -13,7 +13,18 @@ test("test bitfield", () => {
   assert.deepEqual([...v1], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0])
 })
 
-test("test BitField.of", () => {
+test("test noop changes", () => {
+  const v0 = BitField.from([7, 9])
+  assert.equal(v0, BitField.set(v0, 7))
+  assert.notEqual(v0, BitField.set(v0, 8))
+  assert.equal(v0, BitField.set(v0, 9))
+
+  assert.notEqual(v0, BitField.unset(v0, 7))
+  assert.equal(v0, BitField.unset(v0, 8))
+  assert.notEqual(v0, BitField.unset(v0, 9))
+})
+
+test("test BitField.from", () => {
   const v0 = BitField.from([7, 9, 0], 128)
   let n = 0
 
@@ -30,6 +41,37 @@ test("test bitfield", () => {
   assert.equal(BitField.popcount(v1, 0), 0)
   assert.equal(BitField.popcount(v1, 8), 1)
   assert.equal(BitField.popcount(v1, 7), 0)
+})
+
+test("BitField.or", () => {
+  const v0 = BitField.from([1])
+  const v1 = BitField.from([7])
+  const v2 = BitField.or(v0, v1)
+
+  assert.equal(BitField.get(v0, 1), true)
+  assert.equal(BitField.get(v1, 1), false)
+  assert.equal(BitField.get(v2, 1), true)
+  assert.equal(BitField.get(v0, 7), false)
+  assert.equal(BitField.get(v1, 7), true)
+  assert.equal(BitField.get(v2, 7), true)
+})
+
+test("BitField.and", () => {
+  const v0 = BitField.from([1, 7])
+  const v1 = BitField.from([7, 9])
+  const v2 = BitField.and(v0, v1)
+
+  assert.equal(BitField.get(v0, 1), true)
+  assert.equal(BitField.get(v1, 1), false)
+  assert.equal(BitField.get(v2, 1), false)
+
+  assert.equal(BitField.get(v0, 7), true)
+  assert.equal(BitField.get(v1, 7), true)
+  assert.equal(BitField.get(v2, 7), true)
+
+  assert.equal(BitField.get(v0, 9), false)
+  assert.equal(BitField.get(v1, 9), true)
+  assert.equal(BitField.get(v2, 9), false)
 })
 
 test("test toBytes / fromBytes", () => {
@@ -52,4 +94,10 @@ test("test 256bit field ", () => {
   assert.equal(BitField.popcount(v1, 7), 0)
   assert.equal(BitField.popcount(v1, 8), 1)
   assert.equal(BitField.popcount(v1, 20), 1)
+})
+
+test("throws when size is not supported", () => {
+  assert.throws(() => BitField.empty(3), /Must be multiple of 8/)
+
+  assert.throws(() => BitField.empty(257), /Must be multiple of 8/)
 })

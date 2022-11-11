@@ -1,6 +1,6 @@
-export * from "../hamt/api.js"
-import * as API from "src/hamt/api.js"
+import type { Uint32 } from "../bitfield/api.js"
 
+export type { Uint32 }
 export interface Options<Self> {
   bitWidth?: number
   hash: (input: Uint8Array) => Self
@@ -10,6 +10,6 @@ export interface Options<Self> {
 export interface Path<Self> {
   from(key: string): Self
 
-  size: API.Uint32
-  at(path: Self, depth: number): API.Uint32
+  size: Uint32
+  at(path: Self, depth: number): Uint32
 }

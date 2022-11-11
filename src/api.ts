@@ -1,5 +1,5 @@
-import type { BitField } from "../bitfield/api.js"
-import type { Path } from "../path/api.js"
+import type { BitField, Uint32 } from "./bitfield/api.js"
+import type { Path } from "./path/api.js"
 
 export interface Config<Bits = unknown, BitMap = Bits> {
   /**
@@ -30,39 +30,6 @@ export interface Config<Bits = unknown, BitMap = Bits> {
    * representing them as a single 32 bit integer as opposed to `Uint8Array`.
    */
   BitField: BitField<BitMap>
-}
-
-/**
- * An API is used to compute key hash and consume it in `bitWidth` number of
- * bits at a time. Interface is abstract to allow most efficient representation
- * of the hash, specifically this enables us to optimize HAMTs with branching
- * factor of 32 where key hash is just a 32 bits and there for will be a
- * represented as a single 32 bit integer. In other words `Self` is `number` in
- * optimized case and `Uint8Array` in all other cases.
- */
-export interface KeyHasher<Self> {
-  /**
-   * Function is used to calculate a hash from the (UTF8 encoded) key. Please
-   * note that hashing function is NOT REQUIRED to be cryptographically secure
-   * since these hashes are not stored anywhere, in fact plain text keys are
-   * stored instead. This is also why this function can and is required to be
-   * synchronous in turn making HAMTs fit for use cases where async interface
-   * would be prohibitive.
-   */
-  create(keyBytes: Uint8Array): Self
-
-  /**
-   * Size in bits of the hash this will produce
-   */
-  size: number
-
-  /**
-   * Function to read out `count` number of bits from the given bit `offset` of
-   * the provided `keyHash` as single `Uint32`. It is used by HAMT implementation
-   * to consume `bitWidth` number of bits of the hash at every depth level in
-   * order to calculate the index.
-   */
-  slice(keyHash: Self, offset: number, count: number): Uint32
 }
 
 export interface HAMT<
@@ -204,9 +171,8 @@ export interface Children<
   C extends Config = Config
 > extends Array<K | T | Node<T, K, C>> {}
 
-export type Uint32 = number
 export type usize = number
 
 export interface Edit {}
 
-export type { BitField }
+export type { BitField, Uint32, Path }

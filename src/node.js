@@ -1,5 +1,5 @@
-import * as API from "./hamt/api.js"
-export * from "./hamt/api.js"
+import * as API from "./api.js"
+export * from "./api.js"
 import * as BitField from "./bitfield/Uint32.js"
 import * as Path from "./path/Uint32.js"
 export { API }
