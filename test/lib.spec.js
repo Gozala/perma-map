@@ -7,7 +7,7 @@ import { insert, iterate, byKey, byName } from "./util.js"
 test("hamt basic", () => {
   const v0 = HAMT.empty(UnixFS.config)
 
-  assert.equal(v0.tableSize, 256)
+  assert.equal(UnixFS.tableSize(v0), 256)
   assert.equal(v0.size, 0)
 
   const v1 = v0.set("hello", "world")

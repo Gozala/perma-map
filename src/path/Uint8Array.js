@@ -1,23 +1,20 @@
 import * as API from "./api.js"
-import * as Bits from "../bits.js"
 const utf8 = new TextEncoder()
-import { murmur3128 } from "@multiformats/murmur3"
+import { murmur364 } from "@multiformats/murmur3"
 
 /**
  * @param {Uint8Array} bytes
  */
-export const hash128 = bytes =>
-  /** @type {Uint8Array} */ (murmur3128.encode(bytes))
+export const hash64 = bytes =>
+  /** @type {Uint8Array} */ (murmur364.encode(bytes))
 
 /**
  * @param {Partial<API.Options<Uint8Array>>} options
  * @returns {API.Path<Uint8Array>}
  */
-export const configure = ({
-  bitWidth = 8,
-  hash = hash128,
-  hashSize = hash(new Uint8Array()).byteLength,
-} = {}) => {
+export const configure = ({ bitWidth = 8, hash = hash64 } = {}) => {
+  const hashSize = hash(new Uint8Array()).byteLength
+
   /**
    * @param {Uint8Array} path
    * @param {number} depth
@@ -29,7 +26,7 @@ export const configure = ({
       throw new RangeError(`Out of bounds`)
     }
 
-    return Bits.toInt(path, offset, bitWidth)
+    return toInt(path, offset, bitWidth)
   }
 
   /**
@@ -39,4 +36,34 @@ export const configure = ({
   const from = key => hash(utf8.encode(key))
 
   return { from, at, size: Math.ceil((hashSize * 8) / bitWidth) }
+}
+
+/**
+ * @param {Uint8Array} bytes
+ * @param {number} offset - bit offset
+ * @param {number} count - number of bits to consume
+ */
+export const toInt = (bytes, offset, count) => {
+  let byteOffset = (offset / 8) | 0
+  let bitOffset = offset % 8
+  let desired = count
+  let bits = 0
+  while (desired > 0 && byteOffset < bytes.byteLength) {
+    const byte = bytes[byteOffset]
+    const available = 8 - bitOffset
+
+    const taking = available < desired ? available : desired
+    const bitsLeft = 8 - bitOffset - taking
+    // mask to turn of bits before bitOffset
+    const mask = 0xff >> bitOffset
+    // turn off offset bits and shift to drop remaining bit on the right
+    const value = (mask & byte) >> bitsLeft
+    bits = (bits << taking) + value
+
+    desired -= taking
+    byteOffset++
+    bitOffset = 0
+  }
+
+  return bits
 }

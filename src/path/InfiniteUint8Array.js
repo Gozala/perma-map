@@ -1,23 +1,20 @@
 import * as API from "./api.js"
-import * as Bits from "../bits.js"
-import { murmur3128 } from "@multiformats/murmur3"
+import { toInt } from "./Uint8Array.js"
+import { murmur364 } from "@multiformats/murmur3"
 const utf8 = new TextEncoder()
 
 /**
  * @param {Uint8Array} bytes
  */
 export const hash64 = bytes =>
-  /** @type {Uint8Array} */ (murmur3128.encode(bytes)).subarray(0, 8)
+  /** @type {Uint8Array} */ (murmur364.encode(bytes))
 
 /**
  * @param {Partial<API.Options<Uint8Array>>} options
  * @returns {API.Path<Uint8Array>}
  */
-export const configure = ({
-  bitWidth = 8,
-  hash = hash64,
-  hashSize = hash(new Uint8Array()).byteLength,
-}) => {
+export const configure = ({ bitWidth = 8, hash = hash64 }) => {
+  const hashSize = hash(new Uint8Array()).byteLength
   const options = { bitWidth, hash, hashSize }
 
   /**
@@ -38,7 +35,10 @@ export const configure = ({
 /**
  * @param {Uint8Array} key
  * @param {number} depth
- * @param {Required<API.Options<Uint8Array>>} config
+ * @param {object} options
+ * @param {number} options.bitWidth
+ * @param {number} options.hashSize
+ * @param {(input:Uint8Array) => Uint8Array} options.hash
  */
 export const read = (key, depth = 0, { bitWidth = 8, hash, hashSize }) => {
   // key digest consists of infinite number of hash frames that are computed
@@ -70,7 +70,7 @@ export const read = (key, depth = 0, { bitWidth = 8, hash, hashSize }) => {
     // otherwise we consume whatever's available and continue rest in the next
     // cycle(s).
     const count = maxBits < bitCount ? maxBits : bitCount
-    digest = (digest << count) + Bits.toInt(frame, offset, count)
+    digest = (digest << count) + toInt(frame, offset, count)
     bitCount -= count
     bitOffset += count
   }

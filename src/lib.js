@@ -4,7 +4,8 @@ import { create as createBitmapIndexedNode } from "./node.js"
 import * as API from "./api.js"
 import * as Uint32Path from "./path/Uint32.js"
 import * as Uint8ArrayPath from "./path/Uint8Array.js"
-import { configure as configureBitField } from "./bitfield/lib.js"
+import * as Uint32BitField from "./bitfield/Uint32.js"
+import * as Uint8ArrayBitField from "./bitfield/Uint8Array.js"
 
 const NOT_FOUND = new RangeError("Not Found")
 
@@ -58,7 +59,7 @@ export const empty = options => {
  */
 const configure = ({
   bitWidth = 5,
-  BitField = configureBitField({ bitWidth }),
+  BitField = bitWidth === 5 ? Uint32BitField : Uint8ArrayBitField,
   Path = bitWidth === 5
     ? Uint32Path.configure({ bitWidth })
     : Uint8ArrayPath.configure({ bitWidth }),
@@ -141,9 +142,6 @@ class PersistentHashMap {
     this.config = config
   }
 
-  get tableSize() {
-    return Math.pow(2, this.config.bitWidth)
-  }
   get size() {
     return this.count
   }
@@ -260,13 +258,7 @@ class HashMapBuilder {
     this.root = root
     this.config = config
   }
-  get tableSize() {
-    if (this.edit) {
-      return Math.pow(2, this.config.bitWidth)
-    } else {
-      throw new Error(`.tableSize was accessed on the finalized builder`)
-    }
-  }
+
   get size() {
     if (this.edit) {
       return this.count

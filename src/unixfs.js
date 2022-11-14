@@ -13,6 +13,11 @@ export const config = {
 }
 
 /**
+ * @param {HAMT.PersistentHashMap} hamt
+ */
+export const tableSize = hamt => Math.pow(2, hamt.config.bitWidth)
+
+/**
  * @template [T=unknown]
  * @template {string} [K=string]
  * @template {HAMT.Config} [C=HAMT.Config<Uint8Array>]

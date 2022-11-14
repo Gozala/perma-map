@@ -6,6 +6,8 @@ export { API }
  * @param {API.Uint32} size
  */
 export const empty = (size = 32) => {
+  // We could support < 32, but it seems impractical and would negatively affect
+  // performance as we would have to do extra bound checks.
   if (size !== 32) {
     throw new Error(`Uint32 BitField does not support size: ${size}`)
   }

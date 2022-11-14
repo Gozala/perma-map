@@ -46,7 +46,6 @@ export interface PersistentHashMap<
   K extends string = string,
   C extends Config = Config
 > extends HAMT<T, K, C> {
-  readonly tableSize: Uint32
   readonly size: number
 
   entries(): IterableIterator<[K, T]>
@@ -69,7 +68,6 @@ export interface HashMapBuilder<
   K extends string = string,
   C extends Config = Config
 > extends HAMT<T, K, C> {
-  readonly tableSize: Uint32
   readonly size: number
 
   set<R extends string>(key: R, value: T): HashMapBuilder<T, K | R, C>

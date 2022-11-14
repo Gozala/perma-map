@@ -14,7 +14,8 @@ export const hash32 = murmur.x64.hash126
  * @param {Partial<API.Options<API.Uint32>>} options
  * @returns {API.Path<API.Uint32>}
  */
-export const configure = ({ bitWidth = 5, hash = hash32, hashSize = 4 }) => {
+export const configure = ({ bitWidth = 5, hash = hash32 }) => {
+  const hashSize = 4
   if (bitWidth > hashSize * 8) {
     throw new RangeError(
       `Can not use bitWidth ${bitWidth} which exceeds the hashSize ${hashSize}`
