@@ -33,25 +33,22 @@ export const from = (bits, size) => {
 export const size = _bitField => 32
 
 /**
- * This reads out chunk of the hash at specific shift offset
- * (which is depth * SHIFT_SIZE) which is a number between 0 to 31 and
- * corresponds to a branch where this key at this depth belongs to.
+ * Reads out 5 bits at the given bit offset.
  *
- * @param {API.Uint32} bitField - Key hash as 32 bit integer.
- * @param {API.Uint32} index - Index with-in the 32bit bitfield
- * (SHIFT_SIZE * depth)
+ * @param {API.Uint32} bitField - Bitfield in Uint32 representation.
+ * @param {API.Uint32} index - Index with-in `bitField` to read bits from.
  * @returns {API.Uint32}
  */
-export const mask = (bitField, index) => (bitField >>> index) & 0x01f
+const mask = (bitField, index) => (bitField >>> index) & 0b11111
 
 /**
- * Maps numbers [0, 31] to powers of two. Creates mask that can be used
- * to check a bit in nodes bitmap for the give key (hash) at given depth.
+ * Creates mask that can be used to check a bit in nodes bitmap for the give
+ * key (hash) at given depth.
  *
  * @param {API.Uint32} bitField - Key hash as 32 bit integer.
  * @param {API.Uint32} index - Index with-in the 32bit bitfield
  */
-export const offset = (bitField, index) => 1 << mask(bitField, index)
+const offset = (bitField, index) => 1 << mask(bitField, index)
 
 /**
  * Maps numbers [0, 31] to powers of two. Creates mask that can be used
@@ -118,7 +115,6 @@ export const toBytes = bitField =>
     (bitField >> 8) & 0b1111_1111,
     bitField & 0b1111_1111
   )
-// new Uint8Array(new Uint32Array([bitField]).buffer)
 
 /**
  *
