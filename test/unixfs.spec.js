@@ -57,12 +57,3 @@ test("dir with 4000 entries", () => {
   assert.deepEqual(inspect(node, 1), iterate4000)
 })
 
-// test.only("dir with 40k entries", () => {
-//   const node = from(iterate(100), {
-//     bitWidth: 8,
-//     Path: Path.configure({ bitWidth: 32 }),
-//   })
-//   // const node = from(iterate(1000000))
-
-//   assert.deepEqual(node.size, 1)
-// })
