@@ -26,7 +26,7 @@ test("hamt basic", () => {
   assert.equal(v1.get("key"), undefined)
 })
 
-test.only("hamt with 100,000 items", () => {
+test("hamt with 100,000 items", () => {
   const node = HAMT.from(
     iterate(
       15,

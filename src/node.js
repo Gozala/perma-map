@@ -487,7 +487,7 @@ export const associate = (node, edit, depth, path, key, value, addedLeaf) => {
       return migrateLeafToBranch(node, edit, offset, branch)
     }
   }
-  // If bit is set in the node bitmapt we have a branch under the current
+  // If bit is set in the node bitmap we have a branch under the current
   // hash slice.
   else if (BitField.get(nodemap, offset)) {
     const child = resolveNode(node, offset)
@@ -874,8 +874,8 @@ export const mergeTwoLeaves = (
           // We insert child with a lower index first so that we can derive it's
           // index on access via popcount
           oldOffset < newOffset
-            ? [oldKey, oldValue, newKey, newKey]
-            : [newKey, newKey, oldKey, oldValue]
+            ? [oldKey, oldValue, newKey, newValue]
+            : [newKey, newValue, oldKey, oldValue]
         ),
         config
       )
