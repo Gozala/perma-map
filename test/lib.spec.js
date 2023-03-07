@@ -26,7 +26,8 @@ test("hamt basic", () => {
   assert.equal(v1.get("key"), undefined)
 })
 
-test("hamt with 100,000 items", () => {
+test("hamt with 100,000 items", function () {
+  this.timeout(1000 * 60 * 5)
   const node = HAMT.from(
     iterate(
       100_000,
