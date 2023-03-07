@@ -26,6 +26,25 @@ test("hamt basic", () => {
   assert.equal(v1.get("key"), undefined)
 })
 
+test.only("hamt with 100,000 items", () => {
+  const node = HAMT.from(
+    iterate(
+      15,
+      n => `${n}.json`,
+      n => `value(${n}.json)`
+    ),
+    UnixFS.config
+  )
+
+  for (const [key, value] of iterate(
+    15,
+    n => `${n}.json`,
+    n => `value(${n}.json)`
+  )) {
+    assert.deepEqual(node.get(key), value, `verify ${key}`)
+  }
+})
+
 test("HAMT can override a value", () => {
   const v0 = HAMT.empty(UnixFS.config)
   const v1 = v0.set("key", "value")
