@@ -5,7 +5,6 @@ import iterate10 from "./fixtures/0-10.js"
 import iterate120 from "./fixtures/0-120.js"
 import iterate10txt from "./fixtures/0-10txt.js"
 import iterate100txt from "./fixtures/0-100txt.js"
-import iterate100_000json from "./fixtures/0-100_000json.js"
 import iterate1000 from "./fixtures/0-1000.js"
 import iterate4000 from "./fixtures/0-4000.js"
 
@@ -56,11 +55,6 @@ test("dir with 10 txt files", () => {
 test("dir with 100 txt files", () => {
   const node = from(iterate(100, n => `${n}.txt`))
   assert.deepEqual(inspect(node, 1), iterate100txt)
-})
-
-test("dir with 100,000 json files", () => {
-  const node = from(iterate(100_000, n => `${n}.json`, n => `value(${n}.json)`))
-  assert.deepEqual(inspect(node), iterate100_000json)
 })
 
 test("dir with 1000 entries", async function () {

@@ -48,7 +48,7 @@ export interface BitField<Self extends unknown = unknown> {
   /**
    * Returns number of set bits in the `bitField` (also known as population
    * count or the Hamming weight) before the provided `index`. If index is
-   * omitted returns returns all the set bits.
+   * omitted returns all the set bits.
    */
   popcount(bitField: Self, index?: Uint32): Uint32
 
