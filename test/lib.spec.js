@@ -29,7 +29,7 @@ test("hamt basic", () => {
 test("hamt with 100,000 items", () => {
   const node = HAMT.from(
     iterate(
-      15,
+      100_000,
       n => `${n}.json`,
       n => `value(${n}.json)`
     ),
@@ -37,7 +37,7 @@ test("hamt with 100,000 items", () => {
   )
 
   for (const [key, value] of iterate(
-    15,
+    100_000,
     n => `${n}.json`,
     n => `value(${n}.json)`
   )) {
