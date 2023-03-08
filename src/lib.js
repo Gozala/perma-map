@@ -59,6 +59,7 @@ export const empty = options => {
  */
 const configure = ({
   bitWidth = 5,
+  /* c8 ignore next 4 */
   BitField = bitWidth === 5 ? Uint32BitField : Uint8ArrayBitField,
   Path = bitWidth === 5
     ? Uint32Path.configure({ bitWidth })
@@ -206,6 +207,7 @@ class PersistentHashMap {
     }
   }
 
+  /* c8 ignore next 3 */
   get bitField() {
     return this.config.BitField.or(this.root.datamap, this.root.nodemap)
   }

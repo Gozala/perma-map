@@ -36,7 +36,7 @@ export const configure = ({ bitWidth = 8, hash = hash64 }) => {
  * @param {Uint8Array} key
  * @param {number} depth
  * @param {object} options
- * @param {number} options.bitWidth
+ * @param {number} [options.bitWidth]
  * @param {number} options.hashSize
  * @param {(input:Uint8Array) => Uint8Array} options.hash
  */
@@ -55,7 +55,7 @@ export const read = (key, depth = 0, { bitWidth = 8, hash, hashSize }) => {
   // Calculate absolute bit offset within the key digest.
   let bitOffset = bitWidth * depth
   while (bitCount > 0) {
-    // We dirive frame number based on current bit offset.
+    // We derive frame number based on current bit offset.
     const frameOffset = (bitOffset / frameBitSize) >> 0
     // Then we compute that hash frame
     const frame =
@@ -66,7 +66,7 @@ export const read = (key, depth = 0, { bitWidth = 8, hash, hashSize }) => {
       frameBitSize <= bitOffset ? bitOffset % frameBitSize : bitOffset
     // calculate number of bits remaining in this frame
     const maxBits = frameBitSize - offset
-    // we will consumer all requiret bits from frame if enough are available
+    // we will consume all required bits from frame if enough are available
     // otherwise we consume whatever's available and continue rest in the next
     // cycle(s).
     const count = maxBits < bitCount ? maxBits : bitCount
