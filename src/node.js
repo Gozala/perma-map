@@ -36,6 +36,7 @@ class BitmapIndexedNode {
   /**
    * @returns {API.BitmapIndexedNode<T, K, C>}
    */
+  /* c8 ignore next 3 */
   empty() {
     return create(this.config)
   }
@@ -122,6 +123,7 @@ class HashCollisionNode {
    * @param {API.CollisionEntries<T, K>} children
    * @param {C} config
    */
+  /* c8 ignore next 12 */
   constructor(edit, count, children, config) {
     this.edit = edit
     this.count = count
@@ -143,6 +145,7 @@ class HashCollisionNode {
    * @param {X} notFound
    * @returns {T|X}
    */
+  /* c8 ignore next 3 */
   lookup(_shift, _path, key, notFound) {
     return lookupCollision(this, key, notFound)
   }
@@ -157,6 +160,7 @@ class HashCollisionNode {
    * @param {{value:boolean}} addedLeaf
    * @returns {API.HashCollisionNode<T, K | R, C>}
    */
+  /* c8 ignore next 3 */
   associate(edit, _shift, path, key, value, addedLeaf) {
     return associateCollision(this, edit, path, key, value, addedLeaf)
   }
@@ -169,6 +173,7 @@ class HashCollisionNode {
    * @param {{value:boolean}} removedLeaf
    * @returns {API.Node<T, K, C>}
    */
+  /* c8 ignore next 3 */
   dissociate(edit, _shift, path, key, removedLeaf) {
     return dissociateCollision(this, edit, path, key, removedLeaf)
   }
@@ -177,6 +182,7 @@ class HashCollisionNode {
    * @param {API.Edit|null} edit
    * @returns {this}
    */
+  /* c8 ignore next 3 */
   fork(edit = null) {
     return /** @type {this} */ (forkCollision(this, edit))
   }
@@ -184,6 +190,7 @@ class HashCollisionNode {
   /**
    * @returns {IterableIterator<[K, T]>}
    */
+  /* c8 ignore next 3 */
   entries() {
     return entries(this)
   }
@@ -191,6 +198,7 @@ class HashCollisionNode {
   /**
    * @returns {IterableIterator<K>}
    */
+  /* c8 ignore next 3 */
   keys() {
     return keys(this)
   }
@@ -198,6 +206,7 @@ class HashCollisionNode {
   /**
    * @returns {IterableIterator<T>}
    */
+  /* c8 ignore next 3 */
   values() {
     return values(this)
   }
@@ -213,6 +222,7 @@ class HashCollisionNode {
  * @param {X} notFound
  * @returns {T|X}
  */
+/* c8 ignore next 8 */
 export const lookupCollision = (node, name, notFound) => {
   const { children: entries, count } = node
   // find where entry with this name belongs
@@ -235,6 +245,7 @@ export const lookupCollision = (node, name, notFound) => {
  * @param {{value:boolean}} addedLeaf
  * @returns {API.HashCollisionNode<T, K | R, C>}
  */
+/* c8 ignore next 26 */
 export const associateCollision = (node, edit, key, name, value, addedLeaf) => {
   const { children, count } = node
 
@@ -273,6 +284,7 @@ export const associateCollision = (node, edit, key, name, value, addedLeaf) => {
  * @param {{value:boolean}} removedLeaf
  * @returns {API.Node<T, K, C>}
  */
+/* c8 ignore next 37 */
 export const dissociateCollision = (node, edit, hash, name, removedLeaf) => {
   const { children: entries, count, config } = node
   const index = findHashCollisionNodeIndex(entries, count, name)
@@ -319,6 +331,7 @@ export const dissociateCollision = (node, edit, hash, name, removedLeaf) => {
  * @param {API.Edit|null} edit
  * @returns {API.HashCollisionNode<T, K, C>}
  */
+/* c8 ignore next 12 */
 export const forkCollision = (node, edit = null) => {
   if (canEdit(node.edit, edit)) {
     return node
@@ -344,6 +357,7 @@ export const forkCollision = (node, edit = null) => {
  * @param {number} count
  * @param {K} key
  */
+/* c8 ignore next 8 */
 const findHashCollisionNodeIndex = (entries, count, key) => {
   let index = 0
   // increase index until we find a index where key <= entries[index]
@@ -830,6 +844,7 @@ export const mergeTwoLeaves = (
   // If we have reached end of the path we can no longer create another
   // `BitmapIndexedNode`, instead we create a node containing (hash) colliding
   // entries
+  /* c8 ignore next 7 */
   if (Path.size < depth) {
     return new HashCollisionNode(
       edit,

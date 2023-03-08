@@ -151,7 +151,7 @@ test("HAMT insert & remove many but find remaining", () => {
     "collapsed all nodes"
   )
 
-  assert.equal(hamt.get(key), value)
+  assert.equal(HAMT.get(hamt, key), value)
 })
 
 test("HAMT insert & remove many but find remaining", () => {
@@ -159,6 +159,14 @@ test("HAMT insert & remove many but find remaining", () => {
   let hamt = insert(HAMT.empty(UnixFS.config), entries)
 
   assert.deepEqual(hamt.empty(), HAMT.empty(UnixFS.config))
+})
+
+test("HAMT can use builder for set value", () => {
+  const v0 = HAMT.empty(UnixFS.config)
+  const b0 = v0.createBuilder()
+  b0.set("key", "value")
+  const v1 = b0.build()
+  assert.equal(v1.get("key"), "value")
 })
 
 test("HAMT can use builder for batch inserts", () => {
