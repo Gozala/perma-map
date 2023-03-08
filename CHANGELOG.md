@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/Gozala/perma-map/compare/v1.0.0...v1.0.1) (2023-03-08)
+
+
+### Miscellaneous Chores
+
+* release 1.0.1 ([e84391c](https://github.com/Gozala/perma-map/commit/e84391c112eda9c5b397946dbedf19ff7315b8f9))
+
 ## 1.0.0 (2023-03-08)
 
 
