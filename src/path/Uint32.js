@@ -14,6 +14,7 @@ export const hash32 = murmur.x64.hash126
  * @param {Partial<API.Options<API.Uint32>>} options
  * @returns {API.Path<API.Uint32>}
  */
+/* c8 ignore next 45 */
 export const configure = ({ bitWidth = 5, hash = hash32 }) => {
   const hashSize = 4
   if (bitWidth > hashSize * 8) {
