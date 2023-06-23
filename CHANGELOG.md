@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.3](https://github.com/Gozala/perma-map/compare/v1.0.2...v1.0.3) (2023-06-23)
+
+
+### Bug Fixes
+
+* declare @multiformats/murmur3 as dependency ([1b52d58](https://github.com/Gozala/perma-map/commit/1b52d5829adfdac822740ae5622ec534717b8092))
+* declare @multiformats/murmur3 as dependency ([b4a9569](https://github.com/Gozala/perma-map/commit/b4a95691e0376f4aa92f409aa2064cdac5155a5d)), closes [#10](https://github.com/Gozala/perma-map/issues/10)
+
 ## [1.0.2](https://github.com/Gozala/perma-map/compare/v1.0.1...v1.0.2) (2023-03-08)
 
 
