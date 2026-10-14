@@ -123,7 +123,6 @@ class HashCollisionNode {
    * @param {API.CollisionEntries<T, K>} children
    * @param {C} config
    */
-  /* c8 ignore next 12 */
   constructor(edit, count, children, config) {
     this.edit = edit
     this.count = count
@@ -145,7 +144,6 @@ class HashCollisionNode {
    * @param {X} notFound
    * @returns {T|X}
    */
-  /* c8 ignore next 3 */
   lookup(_shift, _path, key, notFound) {
     return lookupCollision(this, key, notFound)
   }
@@ -160,7 +158,6 @@ class HashCollisionNode {
    * @param {{value:boolean}} addedLeaf
    * @returns {API.HashCollisionNode<T, K | R, C>}
    */
-  /* c8 ignore next 3 */
   associate(edit, _shift, path, key, value, addedLeaf) {
     return associateCollision(this, edit, path, key, value, addedLeaf)
   }
@@ -173,7 +170,6 @@ class HashCollisionNode {
    * @param {{value:boolean}} removedLeaf
    * @returns {API.Node<T, K, C>}
    */
-  /* c8 ignore next 3 */
   dissociate(edit, _shift, path, key, removedLeaf) {
     return dissociateCollision(this, edit, path, key, removedLeaf)
   }
@@ -182,7 +178,6 @@ class HashCollisionNode {
    * @param {API.Edit|null} edit
    * @returns {this}
    */
-  /* c8 ignore next 3 */
   fork(edit = null) {
     return /** @type {this} */ (forkCollision(this, edit))
   }
@@ -190,7 +185,6 @@ class HashCollisionNode {
   /**
    * @returns {IterableIterator<[K, T]>}
    */
-  /* c8 ignore next 3 */
   entries() {
     return entries(this)
   }
@@ -198,7 +192,6 @@ class HashCollisionNode {
   /**
    * @returns {IterableIterator<K>}
    */
-  /* c8 ignore next 3 */
   keys() {
     return keys(this)
   }
@@ -206,7 +199,6 @@ class HashCollisionNode {
   /**
    * @returns {IterableIterator<T>}
    */
-  /* c8 ignore next 3 */
   values() {
     return values(this)
   }
@@ -222,7 +214,6 @@ class HashCollisionNode {
  * @param {X} notFound
  * @returns {T|X}
  */
-/* c8 ignore next 8 */
 export const lookupCollision = (node, name, notFound) => {
   const { children: entries, count } = node
   // find where entry with this name belongs
@@ -245,7 +236,6 @@ export const lookupCollision = (node, name, notFound) => {
  * @param {{value:boolean}} addedLeaf
  * @returns {API.HashCollisionNode<T, K | R, C>}
  */
-/* c8 ignore next 26 */
 export const associateCollision = (node, edit, key, name, value, addedLeaf) => {
   const { children, count } = node
 
@@ -256,7 +246,7 @@ export const associateCollision = (node, edit, key, name, value, addedLeaf) => {
     const newNode = node.fork(edit)
     addedLeaf.value = true
     newNode.count += 1
-    newNode.children.splice(index, key, value)
+    newNode.children.splice(index, 0, /** @type {K} */ (name), value)
     return newNode
   }
   // If name is the same but value is not we fork the node and update
@@ -284,7 +274,6 @@ export const associateCollision = (node, edit, key, name, value, addedLeaf) => {
  * @param {{value:boolean}} removedLeaf
  * @returns {API.Node<T, K, C>}
  */
-/* c8 ignore next 37 */
 export const dissociateCollision = (node, edit, hash, name, removedLeaf) => {
   const { children: entries, count, config } = node
   const index = findHashCollisionNodeIndex(entries, count, name)
@@ -331,7 +320,6 @@ export const dissociateCollision = (node, edit, hash, name, removedLeaf) => {
  * @param {API.Edit|null} edit
  * @returns {API.HashCollisionNode<T, K, C>}
  */
-/* c8 ignore next 12 */
 export const forkCollision = (node, edit = null) => {
   if (canEdit(node.edit, edit)) {
     return node
@@ -357,11 +345,10 @@ export const forkCollision = (node, edit = null) => {
  * @param {number} count
  * @param {K} key
  */
-/* c8 ignore next 8 */
 const findHashCollisionNodeIndex = (entries, count, key) => {
   let index = 0
   // increase index until we find a index where key <= entries[index]
-  while (index < count && entries[index] > key) {
+  while (index < count * 2 && entries[index] > key) {
     index += 2
   }
   return index
@@ -594,10 +581,10 @@ export const dissociate = (source, edit, depth, path, key, removedLeaf) => {
     const child = node.dissociate(edit, depth + 1, path, key, removedLeaf)
     // if child has a single element we need to canonicalize
     if (hasSingleLeaf(child)) {
-      // if source has a single child, we collapse and return the child
-      // otherwise we inline the child.
+      // if source has a single child, we collapse it and return a node of
+      // the child's one entry, otherwise we inline the child.
       return hasSingleNode(source)
-        ? child
+        ? escalate(child, edit, path)
         : inlineChild(source, edit, offset, child)
     } else if (node === child) {
       return source
@@ -768,6 +755,37 @@ export const inlineChild = (source, edit, offset, child) => {
 }
 
 /**
+ * A node of the one entry of `child`, placed as it would be in a node at
+ * depth 0. A collapsed node travels up until a parent inlines its entry,
+ * which reads the entry and not its slot, or until it becomes the root,
+ * where it is looked up by the slot of depth 0. The entry shares that
+ * slot with the key whose removal collapsed it, which is at `path`.
+ *
+ * @template T
+ * @template {string} K
+ * @template {API.Config} C
+ * @param {API.BitmapIndexedNode<T, K, C>} child
+ * @param {API.Edit|null} edit
+ * @param {ReturnType<C['Path']['from']>} path
+ * @returns {API.BitmapIndexedNode<T, K, C>}
+ */
+export const escalate = (child, edit, path) => {
+  const { config } = child
+  const { BitField, Path } = config
+  const size = Math.pow(2, config.bitWidth)
+  return new BitmapIndexedNode(
+    edit,
+    BitField.from([Path.at(path, 0)], size),
+    BitField.empty(size),
+    /** @type {API.Children<T, K, C>} */ ([
+      child.children[0],
+      child.children[1],
+    ]),
+    config
+  )
+}
+
+/**
  * @template T
  * @template {string} K
  * @template {API.Config} C
@@ -844,12 +862,15 @@ export const mergeTwoLeaves = (
   // If we have reached end of the path we can no longer create another
   // `BitmapIndexedNode`, instead we create a node containing (hash) colliding
   // entries
-  /* c8 ignore next 7 */
-  if (Path.size < depth) {
+  if (depth >= Path.size) {
     return new HashCollisionNode(
       edit,
       2,
-      [oldKey, oldValue, newKey, newValue],
+      // Colliding entries are kept in descending order of their keys, as
+      // `findHashCollisionNodeIndex` expects.
+      oldKey > newKey
+        ? [oldKey, oldValue, newKey, newValue]
+        : [newKey, newValue, oldKey, oldValue],
       config
     )
   } else {
