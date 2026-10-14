@@ -5,7 +5,6 @@ import { murmur364 } from "@multiformats/murmur3"
 /**
  * @param {Uint8Array} bytes
  */
-/* c8 ignore next 2 */
 export const hash64 = bytes =>
   /** @type {Uint8Array} */ (murmur364.encode(bytes))
 
@@ -13,7 +12,6 @@ export const hash64 = bytes =>
  * @param {Partial<API.Options<Uint8Array>>} options
  * @returns {API.Path<Uint8Array>}
  */
-/* c8 ignore next 25 */
 export const configure = ({ bitWidth = 8, hash = hash64 } = {}) => {
   const hashSize = hash(new Uint8Array()).byteLength
 
@@ -24,7 +22,7 @@ export const configure = ({ bitWidth = 8, hash = hash64 } = {}) => {
    */
   const at = (path, depth) => {
     const offset = depth * bitWidth
-    if (offset > hashSize) {
+    if (offset >= hashSize * 8) {
       throw new RangeError(`Out of bounds`)
     }
 

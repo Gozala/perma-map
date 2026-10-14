@@ -55,10 +55,12 @@ const offset = (bitField, index) => 1 << mask(bitField, index)
  * to check a bit in nodes bitmap for the give key (hash) at given depth.
  *
  * @param {API.Uint32} bitField - Key hash as 32 bit integer.
- * @param {API.Uint32} index - Index with-in the 32bit bitfield
+ * @param {API.Uint32} [index] - Index with-in the 32bit bitfield; without one, every bit set is counted
  */
-export const popcount = (bitField, index = 31) =>
-  bitCount(bitField & (offset(index, 0) - 1))
+export const popcount = (bitField, index) =>
+  index === undefined
+    ? bitCount(bitField)
+    : bitCount(bitField & (offset(index, 0) - 1))
 
 /**
  * @param {API.Uint32} bitField
@@ -70,7 +72,7 @@ export const set = (bitField, index) => bitField | (1 << index)
  * @param {API.Uint32} bitField
  * @param {API.Uint32} index
  */
-export const unset = (bitField, index) => bitField & (0xff ^ (1 << index))
+export const unset = (bitField, index) => bitField & ~(1 << index)
 
 /**
  * @param {API.Uint32} bitField
