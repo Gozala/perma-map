@@ -270,3 +270,58 @@ test("a path of bytes has no slot past its hash", () => {
   assert.equal(Path.at(path, 3), 4)
   assert.throws(() => Path.at(path, 4), /Out of bounds/)
 })
+
+/**
+ * The whole structure of a trie: each node's bitmaps and children, with
+ * keys and values in place and branches recursively.
+ *
+ * @param {any} node
+ * @returns {unknown}
+ */
+const shape = node => ({
+  datamap: Array.from(node.datamap),
+  nodemap: Array.from(node.nodemap),
+  children: node.children.map((/** @type {any} */ child) =>
+    child && child.children ? shape(child) : child
+  ),
+})
+
+test("UnixFS trees after removals are the trees of their entries", function () {
+  this.timeout(60 * 1000)
+  // Keys that share the root's slot, so the root often holds one branch
+  // and nothing else, the shape where a removal collapses up to it. The
+  // tree after any sets and deletes must be the one built from scratch
+  // from what remains, which is what the fixtures pin.
+  const { Path } = UnixFS.config
+  const slot = (/** @type {string} */ key) => Path.at(Path.from(key), 0)
+  const pool = []
+  for (let n = 0; pool.length < 8; n++) {
+    if (slot(`${n}.txt`) === slot("0.txt")) {
+      pool.push(`${n}.txt`)
+    }
+  }
+  const next = random(3)
+  for (let run = 0; run < 50; run++) {
+    let hamt = HAMT.empty(UnixFS.config)
+    const model = new Map()
+    for (let n = 0; n < 100; n++) {
+      const key = pool[next(pool.length)]
+      if (next(2) === 0) {
+        hamt = hamt.delete(key)
+        model.delete(key)
+      } else {
+        hamt = hamt.set(key, n)
+        model.set(key, n)
+      }
+      const fresh = [...model].reduce(
+        (hamt, [key, value]) => hamt.set(key, value),
+        HAMT.empty(UnixFS.config)
+      )
+      assert.deepEqual(
+        shape(hamt.root),
+        shape(fresh.root),
+        `run ${run}, op ${n}`
+      )
+    }
+  }
+})
