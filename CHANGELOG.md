@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.4](https://github.com/Gozala/perma-map/compare/v1.0.3...v1.0.4) (2026-10-14)
+
+
+### Bug Fixes
+
+* 32-bit bitfields, hash collisions, and removal to one entry ([#14](https://github.com/Gozala/perma-map/issues/14)) ([3132cb7](https://github.com/Gozala/perma-map/commit/3132cb7d1b324358254e86b47e036053b53c1c86))
+
 ## [1.0.3](https://github.com/Gozala/perma-map/compare/v1.0.2...v1.0.3) (2023-06-23)
 
 
